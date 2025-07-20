@@ -120,6 +120,9 @@ export function svgToPNG(svgContent: string): Promise<Blob> {
     };
     
     img.onerror = () => reject(new Error('Failed to load SVG image'));
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgContent);
+    
+    // Use data URL instead of base64 encoding to handle special characters
+    const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgContent);
+    img.src = dataUrl;
   });
 } 

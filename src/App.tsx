@@ -42,33 +42,46 @@ function App() {
   }) {
     try {
       console.log('Saving mask:', mask.name);
+      console.log('PNG blob size:', mask.pngBlob.size);
       
       // Convert blob to data URL for storage
       const reader = new FileReader();
-      reader.onload = () => {
-        const imageDataUrl = reader.result as string;
-        console.log('Image converted to data URL, length:', imageDataUrl.length);
-        
-        // Add to local gallery
-        const newFacette: Facette = {
-          id: mask.filename.replace('.png', ''),
-          name: mask.name,
-          words: mask.words,
-          filename: mask.filename,
-          imageUrl: imageDataUrl
-        };
-        
-        console.log('New facette created:', newFacette);
-        
-        const updatedGallery = [newFacette, ...gallery];
-        setGallery(updatedGallery);
-        
-        // Save to localStorage
-        localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
-        console.log('Saved to localStorage, gallery count:', updatedGallery.length);
-        
-        alert('Mask saved successfully!');
+      
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        alert('Error converting image. Please try again.');
       };
+      
+      reader.onload = () => {
+        try {
+          const imageDataUrl = reader.result as string;
+          console.log('Image converted to data URL, length:', imageDataUrl.length);
+          
+          // Add to local gallery
+          const newFacette: Facette = {
+            id: mask.filename.replace('.png', ''),
+            name: mask.name,
+            words: mask.words,
+            filename: mask.filename,
+            imageUrl: imageDataUrl
+          };
+          
+          console.log('New facette created:', newFacette);
+          
+          const updatedGallery = [newFacette, ...gallery];
+          setGallery(updatedGallery);
+          
+          // Save to localStorage
+          localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
+          console.log('Saved to localStorage, gallery count:', updatedGallery.length);
+          
+          alert('Mask saved successfully!');
+        } catch (innerError) {
+          console.error('Error in onload handler:', innerError);
+          alert('Error processing image. Please try again.');
+        }
+      };
+      
       reader.readAsDataURL(mask.pngBlob);
     } catch (error) {
       console.error('Failed to save mask:', error);

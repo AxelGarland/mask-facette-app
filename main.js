@@ -900,17 +900,20 @@ let currentGalleryList = [];
 
 async function fetchGalleryList() {
   try {
-    const res = await fetch('http://localhost:3001/gallery-list');
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+    console.log('Loading gallery from localStorage...');
+    const savedGallery = localStorage.getItem('maskGallery');
+    console.log('Saved gallery data:', savedGallery);
+    
+    if (savedGallery) {
+      const galleryData = JSON.parse(savedGallery);
+      console.log('Parsed gallery data:', galleryData);
+      return galleryData;
+    } else {
+      console.log('No saved gallery found');
+      return [];
     }
-    const list = await res.json();
-    currentGalleryList = list;
-    console.log('Gallery list fetched:', list);
-    return list;
   } catch (error) {
-    console.error('Error fetching gallery list:', error);
-    currentGalleryList = [];
+    console.error('Failed to load gallery:', error);
     return [];
   }
 }
@@ -933,9 +936,9 @@ function renderGalleryGrid() {
   grid.style.maxWidth = '1200px';
   grid.style.margin = '0 auto';
   
-  fetchGalleryList().then(pngs => {
-    currentGalleryList = pngs; // <-- Fix: store full objects, not just filenames
-    if (!pngs.length) {
+  fetchGalleryList().then(masks => {
+    currentGalleryList = masks;
+    if (!masks.length) {
       const msg = document.createElement('div');
       msg.className = 'no-masks-message';
       msg.textContent = 'No masks in the gallery yet.';
@@ -946,7 +949,7 @@ function renderGalleryGrid() {
       grid.appendChild(msg);
       return;
     }
-    pngs.forEach((maskObj, idx) => {
+    masks.forEach((maskObj, idx) => {
       // Create container for image and delete button
       const container = document.createElement('div');
       container.style.position = 'relative';
@@ -955,13 +958,13 @@ function renderGalleryGrid() {
       container.style.marginLeft = '40px'; // Add space between left arrow and image
       
       const img = document.createElement('img');
-      img.src = `http://localhost:3001/gallery/${maskObj.filename}`;
-      img.alt = `Mask ${idx + 1}`;
+      img.src = maskObj.imageUrl; // Use the data URL from localStorage
+      img.alt = maskObj.name || `Mask ${idx + 1}`;
       img.className = 'gallery-item-image';
       img.style.cursor = 'pointer';
       img.addEventListener('click', () => openGalleryModal(idx));
       img.addEventListener('error', (e) => {
-        console.error('Failed to load image:', maskObj.filename, e);
+        console.error('Failed to load image:', maskObj.name, e);
       });
       img.addEventListener('load', () => {
         // Image loaded successfully
@@ -998,34 +1001,27 @@ function renderGalleryGrid() {
       deleteOverlay.addEventListener('click', async (e) => {
         e.stopPropagation(); // Prevent opening modal
         
-        if (!confirm(`Are you sure you want to delete "${maskObj.filename}"? This action cannot be undone.`)) {
+        if (!confirm(`Are you sure you want to delete "${maskObj.name}"? This action cannot be undone.`)) {
           return;
         }
         
         try {
-          const response = await fetch(`http://localhost:3001/delete-mask/${maskObj.filename}`, {
-            method: 'DELETE'
-          });
+          // Remove from localStorage
+          const savedGallery = localStorage.getItem('maskGallery');
+          const gallery = savedGallery ? JSON.parse(savedGallery) : [];
+          const updatedGallery = gallery.filter(mask => mask.id !== maskObj.id);
+          localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
           
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+          console.log('Mask deleted successfully:', maskObj.name);
           
-          const result = await response.json();
-          if (result.success) {
-            console.log('Mask deleted successfully:', maskObj.filename);
-            
-            // Remove from current list
-            currentGalleryList.splice(idx, 1);
-            
-            // Refresh the gallery grid
-            renderGalleryGrid();
-            
-            // Show success message
-            alert('Mask deleted successfully!');
-          } else {
-            throw new Error('Server returned error');
-          }
+          // Remove from current list
+          currentGalleryList.splice(idx, 1);
+          
+          // Refresh the gallery grid
+          renderGalleryGrid();
+          
+          // Show success message
+          alert('Mask deleted successfully!');
         } catch (error) {
           console.error('Error deleting mask:', error);
           alert('Failed to delete mask. Please try again.');
@@ -1210,57 +1206,53 @@ function openGalleryModal(idx) {
     const maskObj = currentGalleryList[currentIdx];
     console.log('Modal maskObj:', maskObj);
     console.log('Modal maskObj.name:', maskObj.name);
-    console.log('Modal maskObj.adjectives:', maskObj.adjectives);
-    const filename = maskObj.filename || maskObj;
-    const src = `http://localhost:3001/gallery/${filename}`;
-    img.src = src;
-    img.alt = `Mask ${currentIdx + 1}`;
-    downloadBtn.download = filename;
-    downloadBtn.href = src;
+    console.log('Modal maskObj.words:', maskObj.words);
+    
+    // Use the data URL from localStorage
+    img.src = maskObj.imageUrl;
+    img.alt = maskObj.name || `Mask ${currentIdx + 1}`;
+    
+    // Set up download button
+    downloadBtn.download = maskObj.filename || 'mask.png';
+    downloadBtn.href = maskObj.imageUrl;
+    
     // Show name and adjectives
     nameHeading.textContent = maskObj.name || 'MASK';
-    adjectivesDiv.textContent = (maskObj.adjectives && maskObj.adjectives.length)
-      ? maskObj.adjectives.join(', ')
+    adjectivesDiv.textContent = (maskObj.words && maskObj.words.length)
+      ? maskObj.words.join(', ')
       : '';
   }
 
   // Delete functionality
   deleteBtn.addEventListener('click', async () => {
-    const filename = currentGalleryList[currentIdx];
-    if (!filename) return;
+    const maskObj = currentGalleryList[currentIdx];
+    if (!maskObj) return;
     
-    if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${maskObj.name}"? This action cannot be undone.`)) {
       return;
     }
     
     try {
-      const response = await fetch(`http://localhost:3001/delete-mask/${filename}`, {
-        method: 'DELETE'
-      });
+      // Remove from localStorage
+      const savedGallery = localStorage.getItem('maskGallery');
+      const gallery = savedGallery ? JSON.parse(savedGallery) : [];
+      const updatedGallery = gallery.filter(mask => mask.id !== maskObj.id);
+      localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      console.log('Mask deleted successfully:', maskObj.name);
       
-      const result = await response.json();
-      if (result.success) {
-        console.log('Mask deleted successfully:', filename);
-        
-        // Remove from current list
-        currentGalleryList.splice(currentIdx, 1);
-        
-        // Close modal and refresh gallery
-        document.body.removeChild(modal);
-        window.removeEventListener('keydown', handleKey);
-        
-        // Refresh the gallery grid
-        renderGalleryGrid();
-        
-        // Show success message
-        alert('Mask deleted successfully!');
-      } else {
-        throw new Error('Server returned error');
-      }
+      // Remove from current list
+      currentGalleryList.splice(currentIdx, 1);
+      
+      // Close modal and refresh gallery
+      document.body.removeChild(modal);
+      window.removeEventListener('keydown', handleKey);
+      
+      // Refresh the gallery grid
+      renderGalleryGrid();
+      
+      // Show success message
+      alert('Mask deleted successfully!');
     } catch (error) {
       console.error('Error deleting mask:', error);
       alert('Failed to delete mask. Please try again.');
@@ -1309,36 +1301,63 @@ function openGalleryModal(idx) {
 // --- SAVE TO GALLERY LOGIC ---
 async function saveMaskToGallery(canvas, name, adjectives) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => {
-      const formData = new FormData();
-      formData.append('mask', blob, getMaskName() + '.png');
-      formData.append('name', name || getMaskName());
-      formData.append('adjectives', JSON.stringify(adjectives || []));
-      console.log('Saving mask to gallery:', getMaskName() + '.png');
-      fetch('http://localhost:3001/upload-mask', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+    try {
+      console.log('Saving mask to localStorage:', name);
+      
+      canvas.toBlob(blob => {
+        try {
+          // Convert blob to data URL for storage
+          const reader = new FileReader();
+          
+          reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            reject(new Error('Error converting image'));
+          };
+          
+          reader.onload = () => {
+            try {
+              const imageDataUrl = reader.result;
+              console.log('Image converted to data URL, length:', imageDataUrl.length);
+              
+              // Create mask object
+              const maskObj = {
+                id: Date.now().toString(),
+                name: name || getMaskName(),
+                words: adjectives || [],
+                filename: getMaskName() + '.png',
+                imageUrl: imageDataUrl
+              };
+              
+              console.log('New mask object created:', maskObj);
+              
+              // Get existing gallery
+              const savedGallery = localStorage.getItem('maskGallery');
+              const gallery = savedGallery ? JSON.parse(savedGallery) : [];
+              
+              // Add new mask to gallery
+              gallery.unshift(maskObj);
+              
+              // Save back to localStorage
+              localStorage.setItem('maskGallery', JSON.stringify(gallery));
+              console.log('Saved to localStorage, gallery count:', gallery.length);
+              
+              resolve();
+            } catch (innerError) {
+              console.error('Error in onload handler:', innerError);
+              reject(new Error('Error processing image'));
+            }
+          };
+          
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error('Error in blob processing:', error);
+          reject(error);
         }
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
-          console.log('Mask saved successfully:', data.filename);
-          resolve();
-        } else {
-          console.error('Server returned error:', data);
-          reject(new Error('Server returned error'));
-        }
-      })
-      .catch(error => {
-        console.error('Error saving mask to gallery:', error);
-        reject(error);
-      });
-    }, 'image/png');
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error in saveMaskToGallery:', error);
+      reject(error);
+    }
   });
 }
 
