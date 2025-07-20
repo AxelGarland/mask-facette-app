@@ -55,7 +55,7 @@ function App() {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         
         // Add to local gallery
         const newFacette: Facette = {
