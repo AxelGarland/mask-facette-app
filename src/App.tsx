@@ -8,23 +8,16 @@ function App() {
   const [gallery, setGallery] = useState<Facette[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load existing gallery from server on app start
+  // Load existing gallery from localStorage on app start
   useEffect(() => {
     loadGallery();
   }, []);
 
   async function loadGallery() {
     try {
-      const response = await fetch('http://localhost:3001/gallery-list');
-      if (response.ok) {
-        const data = await response.json();
-        const facettes: Facette[] = data.map((item: any) => ({
-          id: item.filename.replace('.png', ''),
-          name: item.name || 'Unnamed Mask',
-          words: item.adjectives || [],
-          filename: item.filename,
-          imageUrl: `http://localhost:3001/gallery/${item.filename}`
-        }));
+      const savedGallery = localStorage.getItem('maskGallery');
+      if (savedGallery) {
+        const facettes: Facette[] = JSON.parse(savedGallery);
         setGallery(facettes);
       }
     } catch (error) {
@@ -42,20 +35,10 @@ function App() {
     pngBlob: Blob;
   }) {
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('mask', mask.pngBlob, mask.filename);
-      formData.append('name', mask.name);
-      formData.append('adjectives', JSON.stringify(mask.words));
-
-      // Upload to server
-      const response = await fetch('http://localhost:3001/upload-mask', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        await response.json();
+      // Convert blob to data URL for storage
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imageDataUrl = reader.result as string;
         
         // Add to local gallery
         const newFacette: Facette = {
@@ -63,14 +46,18 @@ function App() {
           name: mask.name,
           words: mask.words,
           filename: mask.filename,
-          imageUrl: `http://localhost:3001/gallery/${mask.filename}`
+          imageUrl: imageDataUrl
         };
         
-        setGallery(gallery => [newFacette, ...gallery]);
+        const updatedGallery = [newFacette, ...gallery];
+        setGallery(updatedGallery);
+        
+        // Save to localStorage
+        localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
+        
         alert('Mask saved successfully!');
-      } else {
-        throw new Error('Failed to upload mask');
-      }
+      };
+      reader.readAsDataURL(mask.pngBlob);
     } catch (error) {
       console.error('Failed to save mask:', error);
       alert('Failed to save mask. Please try again.');
@@ -79,18 +66,11 @@ function App() {
 
   async function handleDeleteMask(id: string) {
     try {
-      const facette = gallery.find(f => f.id === id);
-      if (!facette) return;
-
-      const response = await fetch(`http://localhost:3001/delete-mask/${facette.filename}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setGallery(gallery => gallery.filter(f => f.id !== id));
-      } else {
-        throw new Error('Failed to delete mask');
-      }
+      const updatedGallery = gallery.filter(f => f.id !== id);
+      setGallery(updatedGallery);
+      
+      // Update localStorage
+      localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
     } catch (error) {
       console.error('Failed to delete mask:', error);
       alert('Failed to delete mask. Please try again.');
