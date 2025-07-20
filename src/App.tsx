@@ -15,10 +15,16 @@ function App() {
 
   async function loadGallery() {
     try {
+      console.log('Loading gallery from localStorage...');
       const savedGallery = localStorage.getItem('maskGallery');
+      console.log('Saved gallery data:', savedGallery);
+      
       if (savedGallery) {
         const facettes: Facette[] = JSON.parse(savedGallery);
+        console.log('Parsed facettes:', facettes);
         setGallery(facettes);
+      } else {
+        console.log('No saved gallery found');
       }
     } catch (error) {
       console.error('Failed to load gallery:', error);
@@ -35,10 +41,13 @@ function App() {
     pngBlob: Blob;
   }) {
     try {
+      console.log('Saving mask:', mask.name);
+      
       // Convert blob to data URL for storage
       const reader = new FileReader();
       reader.onload = () => {
         const imageDataUrl = reader.result as string;
+        console.log('Image converted to data URL, length:', imageDataUrl.length);
         
         // Add to local gallery
         const newFacette: Facette = {
@@ -49,11 +58,14 @@ function App() {
           imageUrl: imageDataUrl
         };
         
+        console.log('New facette created:', newFacette);
+        
         const updatedGallery = [newFacette, ...gallery];
         setGallery(updatedGallery);
         
         // Save to localStorage
         localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
+        console.log('Saved to localStorage, gallery count:', updatedGallery.length);
         
         alert('Mask saved successfully!');
       };
