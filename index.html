@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mask Facette</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  </head>
+  <body>
+    <!-- Animated Tile Background (always visible) -->
+    <div id="tileBackground"></div>
+
+    <!-- Landing Page -->
+    <div class="landing-container">
+      <header class="landing-header">
+        <div class="landing-header-left">
+          <div class="logo">FACETTES</div>
+          <nav class="landing-nav">
+            <a href="#" id="aboutBtn">ABOUT</a>
+            <a href="#" id="galleryBtn">GALLERY</a>
+          </nav>
+        </div>
+        <button class="cta-btn" id="newFacetteBtn">New Facette</button>
+      </header>
+    </div>
+
+    <!-- Mask App (initially hidden) -->
+    <div id="maskApp" class="hidden">
+      <!-- Back to Home Button -->
+      <button id="backToHomeBtn" style="position:fixed; top:24px; right:24px; background:none; border:none; cursor:pointer; z-index:1000;">
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 10L28 28M28 10L10 28" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <!-- Word Selection (just the grid) -->
+      <div class="word-selection">
+        <div style="text-align:center; margin: 16px 0;">
+          <span style="font-weight:600;">Selected: <span id="wordCount">0</span>/10 words</span>
+        </div>
+        <div id="wordGrid" class="word-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+
+        <!-- Canvas Section moved inside word-selection for shared background -->
+        <div class="canvas-section">
+          <div id="maskCanvas"></div>
+          <div class="controls">
+            <button id="generateButton" class="btn btn-primary" disabled>Generate Mask</button>
+            <button id="downloadButton" class="btn btn-secondary" disabled>Download</button>
+          </div>
+          
+          <!-- Mask Name Input -->
+          <div class="name-section" style="text-align:center; margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 12px;">
+            <input type="text" id="maskNameInput" placeholder="Enter a name" style="padding:8px 16px; border-radius:6px; border:1px solid #ccc; width:240px; font-size:inherit; font-family:inherit; color:inherit; background:white;" />
+            <button id="saveMaskBtn" class="btn btn-success" style="padding:8px 24px; font-size:16px; background:#111; color:#fff; border:none;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Overlay Modal (hidden by default) -->
+    <div id="galleryOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:2000; align-items:flex-start; justify-content:center; overflow:auto;">
+      <div style="width:100vw; max-width:1200px; margin:60px auto 0 auto; background:transparent;">
+        <div id="galleryHeader" style="display:flex; align-items:center; position:sticky; top:0; z-index:10; background:transparent; height:auto; border:none; box-shadow:none; padding-top:24px; padding-bottom:0;">
+          <button id="backToLandingBtn" style="background:none; border:none; cursor:pointer; margin-left:24px; margin-right:18px;">
+            <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 30L14 19L24 8" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="gallery-section" style="background:transparent; margin-top:0;">
+          <div id="galleryGrid" class="gallery-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:3000; display:flex; align-items:center; justify-content:center;">
+      <div class="modal-content" style="background:white; border-radius:16px; max-width:600px; width:90vw; padding:40px 32px 32px 32px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.18); display:block;">
+        <button class="modal-close" id="closeAbout" style="position:absolute; top:18px; right:18px; background:none; border:none; font-size:32px; color:#111; cursor:pointer; z-index:10; line-height:1; font-weight:700;">&times;</button>
+        <h2 style="font-size:2rem; font-weight:700; margin-bottom:18px; color:#111;">About FACETTES</h2>
+        <p style="color:#222; font-size:1.1rem; line-height:1.7; margin-bottom:18px;">Identity isn’t a single portrait; it’s an ever-shifting collage of how we see ourselves and how others see us. FACETTES turns that collage into a living set of masks.</p>
+        <h3 style="font-size:1.2rem; font-weight:600; margin-top:24px; margin-bottom:10px; color:#111;">How it works</h3>
+        <p style="color:#222; font-size:1.05rem; line-height:1.7; margin-bottom:12px;">Someone—-you, a friend, a total stranger—chooses ten adjectives: curious, intense, gentle, loud.</p>
+        <p style="color:#222; font-size:1.05rem; line-height:1.7; margin-bottom:12px;">Each word locks onto a fixed spot inside a 5 × 5 tile grid.</p>
+        <p style="color:#222; font-size:1.05rem; line-height:1.7; margin-bottom:12px;">The tiles flip, mirror, and take on one high-contrast color, and in a heartbeat they fuse into a new face: one facette—a tiny polished plane of a much bigger gem.</p>
+        <h3 style="font-size:1.2rem; font-weight:600; margin-top:24px; margin-bottom:10px; color:#111;">Why it matters</h3>
+        <p style="color:#222; font-size:1.05rem; line-height:1.7; margin-bottom:12px;">Susan Sontag wrote that queer people often live with “double awareness”: we act and, at the same time, watch ourselves acting. I feel that constant self-monitoring. At Beit Hayedidut, a hostel for autistic adults, I met people who simply are, unfiltered by outside judgment. Their freedom made me ask: Which parts of me come from inside, and which are stitched together by other people’s words?</p>
+        <p style="color:#222; font-size:1.05rem; line-height:1.7; margin-bottom:0;">FACETTES stages that question. Each mask shows how language from the outside can redraw a face in an instant. Scroll the gallery and you’ll find dozens of facettes—playful, dissonant, surprising. None of them is the whole truth, yet together they form a bright, shifting mosaic of identity.</p>
+      </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="galleryModal" class="modal hidden">
+      <div class="modal-content">
+        <button class="modal-close" id="closeGallery">&times;</button>
+        <h2>Gallery</h2>
+        <div id="galleryModalContent"></div>
+      </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html> 
