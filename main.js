@@ -624,10 +624,8 @@ const sketch = (p) => {
         // Use the 10th word to determine the color
         const paletteWord = wordsToDraw[9];
         // Normalize the key to match the mapping (remove spaces, hyphens, lowercase)
-        const colorKey = paletteWord.replace(/[- ]/g, '').toLowerCase();
-        // Create camelCase version for words like "too much" -> "tooMuch", "self-conscious" -> "selfConscious"
-        const camelCaseKey = paletteWord.replace(/[- ]([a-z])/g, (match, letter) => letter.toUpperCase());
-        // Try multiple key variations for flexibility
+        const colorKey = paletteWord.replace(/[-_ ]/g, '').toLowerCase();
+        const camelCaseKey = paletteWord.replace(/[-_ ]([a-z])/g, (match, letter) => letter.toUpperCase());
         let colA = WORD_COLOR_MAP[paletteWord] || WORD_COLOR_MAP[colorKey] || WORD_COLOR_MAP[camelCaseKey] || "#4AF2E5";
         let colB = colA; // No duotone, just use the same color
         
@@ -755,64 +753,126 @@ const sketch = (p) => {
     };
 };
 
-function initWordGrid() {
-    const wordGrid = document.getElementById('wordGrid');
-    wordGrid.innerHTML = '';
-    const allWords = Object.values(WORD_CATEGORIES).flat();
-    allWords.forEach(word => {
-        const label = document.createElement('label');
-        label.className = 'word-checkbox';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = word;
-        label.appendChild(checkbox);
-        const textNode = document.createElement('span');
-        textNode.textContent = word;
-        textNode.style.fontSize = '0.75rem'; // Smaller text
-        textNode.style.overflow = 'hidden';
-        textNode.style.textOverflow = 'ellipsis';
-        textNode.style.whiteSpace = 'nowrap';
-        textNode.style.width = '100%';
-        textNode.style.textAlign = 'center';
-        if (word.length > 10) {
-            textNode.classList.add('long-word');
-            textNode.setAttribute('data-fullword', word);
-        }
-        label.appendChild(textNode);
-        checkbox.addEventListener('change', () => {
-            if (checkbox.checked) {
-                if (selectedWords.length < 10) selectedWords.push(word);
-                else checkbox.checked = false;
-                label.classList.add('active');
-            } else {
-                selectedWords = selectedWords.filter(w => w !== word);
-                label.classList.remove('active');
+function displayWord(word) {
+    return String(word).replace(/_/g, ' ');
+}
+
+function allAdjectives() {
+    return Object.values(WORD_CATEGORIES).flat();
+}
+
+function pickRandomWords(n = 10) {
+    const pool = allAdjectives().slice();
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, n);
+}
+
+function articleFor(word) {
+    return /^[aeiou]/i.test(word) ? 'an' : 'a';
+}
+
+function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function pickOne(items) {
+    return items[Math.floor(Math.random() * items.length)];
+}
+
+function dominantMood(words) {
+    const counts = { pos: 0, neu: 0, neg: 0, cha: 0 };
+    words.forEach((word) => {
+        if (WORD_CATEGORIES['Positive/Expressive'].includes(word)) counts.pos += 1;
+        else if (WORD_CATEGORIES['Neutral/Introspective'].includes(word)) counts.neu += 1;
+        else if (WORD_CATEGORIES['Negative/Anxious'].includes(word)) counts.neg += 1;
+        else counts.cha += 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function composePersonality(words) {
+    const w = words.map(displayWord);
+    const [a, b, c, d, e, f, g, h, i, j] = w;
+    const mood = dominantMood(words);
+    const openings = {
+        pos: [
+            'It comes forward first.',
+            'This one is easy to meet and harder to pin down.',
+        ],
+        neu: [
+            'It watches before it speaks.',
+            'Quiet at first. Then the rest shows.',
+        ],
+        neg: [
+            'It flinches, then looks back.',
+            'This one is already mid-thought.',
+        ],
+        cha: [
+            'It does not wait to be introduced.',
+            'This one arrives sideways.',
+        ],
+    };
+
+    const bodies = [
+        `${capitalize(a)} in the eyes, ${b} in the mouth. ${capitalize(c)} at the edges, ${d} underneath. People might call it ${e}; it also answers to ${f} and ${g}.`,
+        `A ${a}, ${b} face. ${capitalize(c)} on the surface, ${d} just behind it. The rest is ${e}, ${f}, and a stubborn ${g}.`,
+        `${capitalize(a)} first, then ${b}, then ${c}. Under that: ${d}, ${e}, ${f}. The last thing it gives you is ${g}.`,
+        `It wears ${articleFor(a)} ${a} look and ${articleFor(b)} ${b} one at the same time. Call it ${c} if you need a label. It also holds ${d}, ${e}, and ${f}.`,
+        `${capitalize(a)} and ${b} share the same face. ${capitalize(c)} keeps leaking through. The quieter notes are ${d}, ${e}, and ${f}.`,
+    ];
+
+    const closings = [
+        `It finishes ${h}, almost ${i}, never quite ${j}.`,
+        `Somewhere in there: ${h}, ${i}, and ${j}.`,
+        `What stays with you is the ${h}, then the ${i}, then the ${j}.`,
+    ];
+
+    return `${pickOne(openings[mood])} ${pickOne(bodies)} ${pickOne(closings)}`;
+}
+
+function waitForP5Ready() {
+    return new Promise((resolve, reject) => {
+        const started = Date.now();
+        const tick = () => {
+            const canvasReady = Boolean(document.querySelector('#maskCanvas canvas'));
+            if (p5Instance && typeof p5Instance.updateWithWords === 'function' && canvasReady) {
+                resolve();
+                return;
             }
-            updateWordCountAndButton();
-        });
-        label.addEventListener('mousedown', () => label.classList.add('pressed'));
-        label.addEventListener('mouseup', () => label.classList.remove('pressed'));
-        label.addEventListener('mouseleave', () => label.classList.remove('pressed'));
-        wordGrid.appendChild(label);
+            if (Date.now() - started > 12000) {
+                reject(new Error('p5 timeout'));
+                return;
+            }
+            requestAnimationFrame(tick);
+        };
+        tick();
     });
 }
 
-function updateWordCountAndButton() {
-    const count = selectedWords.length;
-    document.getElementById('wordCount').textContent = count;
-    document.getElementById('generateButton').disabled = count !== 10;
-    // Limit checkboxes
-    const wordGrid = document.getElementById('wordGrid');
-    if (wordGrid) {
-        const checkboxes = wordGrid.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-            if (!cb.checked) {
-                cb.disabled = count >= 10;
-            } else {
-                cb.disabled = false;
-            }
-        });
-    }
+function startRandomFacette() {
+    const landing = document.querySelector('.landing-container');
+    const maskApp = document.getElementById('maskApp');
+    const nameInput = document.getElementById('maskNameInput');
+    const blurb = document.getElementById('personalityBlurb');
+    const downloadButton = document.getElementById('downloadButton');
+    const galleryOverlay = document.getElementById('galleryOverlay');
+
+    if (landing) landing.classList.add('hidden');
+    if (maskApp) maskApp.classList.remove('hidden');
+    if (galleryOverlay) galleryOverlay.style.display = 'none';
+    if (nameInput) nameInput.value = '';
+    if (downloadButton) downloadButton.disabled = true;
+
+    selectedWords = pickRandomWords(10);
+    if (blurb) blurb.textContent = composePersonality(selectedWords);
+
+    ensureP5Instance();
+    waitForP5Ready()
+        .then(() => generateMask())
+        .catch((err) => console.error('Could not draw facette', err));
 }
 
 function normalizeWordKey(word) {
@@ -820,20 +880,12 @@ function normalizeWordKey(word) {
 }
 
 function generateMask() {
-    console.log('generateMask called');
-    console.log('selectedWords:', selectedWords);
-    console.log('p5Instance:', p5Instance);
-    if (selectedWords.length !== 10) {
-        console.log('Not enough words selected');
-        return;
-    }
-    // Normalize all selected words before passing to p5
+    if (selectedWords.length !== 10) return;
     const normalizedWords = selectedWords.map(normalizeWordKey);
-    console.log('normalizedWords:', normalizedWords);
     if (p5Instance && typeof p5Instance.updateWithWords === 'function') {
         p5Instance.updateWithWords(normalizedWords);
-        document.getElementById('downloadButton').disabled = false;
-        console.log('Mask generated successfully');
+        const downloadButton = document.getElementById('downloadButton');
+        if (downloadButton) downloadButton.disabled = false;
     } else {
         console.error('p5Instance not available or updateWithWords not a function');
     }
@@ -1379,13 +1431,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToLandingBtn = document.getElementById('backToLandingBtn');
 
     if (aboutBtn && aboutModal && closeAbout) {
+        const aboutStartBtn = document.getElementById('aboutStartBtn');
+        const aboutGalleryBtn = document.getElementById('aboutGalleryBtn');
+
+        const openAbout = () => {
+            aboutModal.classList.remove('hidden');
+            document.body.classList.add('about-open');
+            aboutBtn.setAttribute('aria-expanded', 'true');
+            closeAbout.focus();
+        };
+
+        const closeAboutOverlay = () => {
+            aboutModal.classList.add('hidden');
+            document.body.classList.remove('about-open');
+            aboutBtn.setAttribute('aria-expanded', 'false');
+        };
+
+        aboutBtn.setAttribute('aria-expanded', 'false');
+        aboutBtn.setAttribute('aria-controls', 'aboutModal');
         aboutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            aboutModal.classList.remove('hidden');
+            openAbout();
         });
-        closeAbout.addEventListener('click', () => {
-            aboutModal.classList.add('hidden');
+        closeAbout.addEventListener('click', closeAboutOverlay);
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) closeAboutOverlay();
         });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !aboutModal.classList.contains('hidden')) {
+                closeAboutOverlay();
+            }
+        });
+        if (aboutStartBtn) {
+            aboutStartBtn.addEventListener('click', () => {
+                closeAboutOverlay();
+                newFacetteBtn?.click();
+            });
+        }
+        if (aboutGalleryBtn && galleryBtn) {
+            aboutGalleryBtn.addEventListener('click', () => {
+                closeAboutOverlay();
+                galleryBtn.click();
+            });
+        }
     }
     if (galleryBtn && galleryOverlay) {
         galleryBtn.addEventListener('click', (e) => {
@@ -1422,46 +1510,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newFacetteBtn && maskApp && landing) {
         newFacetteBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            landing.classList.add('hidden');
-            maskApp.classList.remove('hidden');
-            // Show word selection and canvas, hide gallery section
-            document.querySelector('.word-selection').style.display = 'flex';
-            document.querySelector('.name-section').style.display = 'flex';
-            document.querySelector('.gallery-section').style.display = 'none';
-            // Hide gallery header
-            document.getElementById('galleryHeader').style.display = 'none';
-            // Hide gallery overlay if open
-            if (galleryOverlay) galleryOverlay.style.display = 'none';
-            // Initialize word grid if not already
-            if (typeof initWordGrid === 'function') initWordGrid();
-            if (typeof updateWordCountAndButton === 'function') updateWordCountAndButton();
-            ensureP5Instance();
-
-            // --- RESET WORD SELECTION AND CANVAS ---
-            // Uncheck all checkboxes and remove .active
-            const wordGrid = document.getElementById('wordGrid');
-            if (wordGrid) {
-                const labels = wordGrid.querySelectorAll('.word-checkbox');
-                labels.forEach(label => {
-                    label.classList.remove('active');
-                    const cb = label.querySelector('input[type="checkbox"]');
-                    if (cb) cb.checked = false;
-                });
-            }
-            // Clear selectedWords array
-            selectedWords = [];
-            updateWordCountAndButton();
-            // Clear p5.js canvas
-            if (p5Instance && typeof p5Instance.clear === 'function') {
-                p5Instance.clear();
-            }
+            startRandomFacette();
+        });
+    }
+    const drawAnotherBtn = document.getElementById('drawAnotherBtn');
+    if (drawAnotherBtn) {
+        drawAnotherBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            startRandomFacette();
         });
     }
     // Back to landing arrow logic
     if (backToLandingBtn && galleryOverlay) {
         backToLandingBtn.addEventListener('click', () => {
             galleryOverlay.style.display = 'none';
-            galleryBtn.classList.remove('disabled'); // Re-enable GALLERY link
+            if (galleryBtn) galleryBtn.classList.remove('disabled');
             
             // Clean up any test elements that might have been added
             const testElements = galleryOverlay.querySelectorAll('div[style*="GALLERY OVERLAY IS WORKING"]');
@@ -1516,8 +1579,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Use exactly 8 columns for a bolder look
         const numCols = 8;
         tileSize = Math.ceil(window.innerWidth / numCols);
-        // Make grid much taller for scrolling - use 2.5x viewport height
-        const gridHeight = window.innerHeight * 2.5;
+        // Cover the viewport with tiles
+        const gridHeight = window.innerHeight;
         numRows = Math.ceil(gridHeight / tileSize);
         grid = [];
         for (let r = 0; r < numRows; r++) {
@@ -1640,6 +1703,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const floatingBtn = document.getElementById('floatingNewFacetteBtn');
     
     function handleScroll() {
+        if (!floatingBtn) return;
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const headerHeight = header ? header.offsetHeight : 0;
         
@@ -1665,25 +1729,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (floatingBtn) {
         floatingBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            maskApp.classList.remove('hidden');
-            landing.classList.add('hidden');
-            if (!maskAppInitialized) {
-                if (typeof initWordGrid === 'function') initWordGrid();
-                if (typeof updateWordCountAndButton === 'function') updateWordCountAndButton();
-                maskAppInitialized = true;
-            }
+            startRandomFacette();
         });
     }
 
     // Update the downloadButton event
     const downloadButton = document.getElementById('downloadButton');
     if (downloadButton) {
-        downloadButton.addEventListener('click', async () => {
-            const canvas = document.querySelector('canvas');
-            if (!canvas) return;
-            await saveMaskToGallery(canvas, getMaskName(), selectedWords);
-            alert('Mask saved to gallery!');
-            renderGalleryGrid();
+        downloadButton.addEventListener('click', () => {
+            downloadMask();
         });
     }
 
@@ -1695,17 +1749,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGalleryGrid();
     }
 
-    // Add event listener for Generate Mask button
-    const generateButton = document.getElementById('generateButton');
-    if (generateButton) {
-        generateButton.textContent = 'Generate';
-        generateButton.addEventListener('click', () => {
-            ensureP5Instance(); // Make sure p5 is initialized
-            generateMask();
-        });
-    }
-
-    // Add event listener for Back to Home button
     const backToHomeBtn = document.getElementById('backToHomeBtn');
     if (backToHomeBtn && maskApp && landing) {
         backToHomeBtn.addEventListener('click', () => {

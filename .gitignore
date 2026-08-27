@@ -15,6 +15,9 @@ build/
 .env.test.local
 .env.production.local
 
+# Superdesign temp HTML
+.superdesign/tmp/
+
 # IDE files
 .vscode/
 .idea/
