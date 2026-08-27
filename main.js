@@ -1084,6 +1084,11 @@ function givenFacetteName() {
   return input ? input.value.trim() : '';
 }
 
+function isAppleTouch() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 function wrapCanvasLines(ctx, text, maxWidth) {
   const words = String(text).split(/\s+/).filter(Boolean);
   const lines = [];
@@ -1101,39 +1106,78 @@ function wrapCanvasLines(ctx, text, maxWidth) {
   return lines;
 }
 
-function blobFromCanvas(canvas) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) reject(new Error('Could not export image'));
-      else resolve(blob);
-    }, 'image/png');
-  });
+function dataURLToFile(dataUrl, filename) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = (header.match(/:(.*?);/) || [])[1] || 'image/png';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
 }
 
-function triggerBlobDownload(blob, filename) {
-  const url = URL.createObjectURL(blob);
+function triggerDataUrlDownload(dataUrl, filename) {
   const link = document.createElement('a');
-  link.href = url;
+  link.href = dataUrl;
   link.download = filename;
+  link.rel = 'noopener';
   document.body.appendChild(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-async function composeShareCard() {
+function showSaveOverlay(dataUrl) {
+  const overlay = document.getElementById('saveImageOverlay');
+  const img = document.getElementById('saveOverlayImage');
+  if (!overlay || !img) return;
+  img.src = dataUrl;
+  overlay.classList.remove('hidden');
+}
+
+function hideSaveOverlay() {
+  const overlay = document.getElementById('saveImageOverlay');
+  const img = document.getElementById('saveOverlayImage');
+  if (overlay) overlay.classList.add('hidden');
+  if (img) img.removeAttribute('src');
+}
+
+function exportCanvasDataUrl(canvas) {
+  try {
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    console.error('Could not export image', err);
+    return '';
+  }
+}
+
+function saveImageOnDevice(dataUrl, filename, shareText) {
+  if (!dataUrl) return;
+  const file = dataURLToFile(dataUrl, filename);
+  const canShareFile = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
+
+  if (canShareFile) {
+    navigator.share({ files: [file], title: filename, text: shareText || '' }).catch((err) => {
+      if (err && err.name === 'AbortError') return;
+      if (isAppleTouch()) showSaveOverlay(dataUrl);
+      else triggerDataUrlDownload(dataUrl, filename);
+    });
+    return;
+  }
+
+  if (isAppleTouch()) {
+    showSaveOverlay(dataUrl);
+    return;
+  }
+
+  triggerDataUrlDownload(dataUrl, filename);
+}
+
+function composeShareCard() {
   const source = document.querySelector('#maskCanvas canvas');
   if (!source) throw new Error('No facette to share');
 
   const color = colorForWord(selectedWords[9] || '');
   const name = givenFacetteName();
   const blurb = document.getElementById('personalityBlurb')?.textContent?.trim() || '';
-
-  try {
-    await document.fonts.ready;
-  } catch (err) {
-    console.warn('Fonts not ready for share card', err);
-  }
 
   const width = 1080;
   const height = 1920;
@@ -1196,35 +1240,19 @@ function shareCaption() {
   return [name, blurb, 'FACETTES by Axel Garland'].filter(Boolean).join('\n');
 }
 
-async function shareFacette() {
+function shareFacette() {
   const name = givenFacetteName() || 'FACETTE';
   const filename = `${name}.png`;
-  const card = await composeShareCard();
-  const blob = await blobFromCanvas(card);
-  const file = new File([blob], filename, { type: 'image/png' });
-  const caption = shareCaption();
-  const payload = { files: [file], title: name, text: caption };
-
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share(payload);
-      return;
-    }
-    if (typeof navigator.share === 'function' && !navigator.canShare) {
-      await navigator.share(payload);
-      return;
-    }
-  } catch (err) {
-    if (err && err.name === 'AbortError') return;
-    console.warn('Native share failed, saving image instead', err);
-  }
-
-  triggerBlobDownload(blob, filename);
+  const card = composeShareCard();
+  const dataUrl = exportCanvasDataUrl(card);
+  saveImageOnDevice(dataUrl, filename, shareCaption());
 }
 
 function downloadMask() {
-    const name = getMaskName();
-    p5Instance.saveCanvas(name, 'png');
+  const canvas = document.querySelector('#maskCanvas canvas');
+  if (!canvas) return;
+  const dataUrl = exportCanvasDataUrl(canvas);
+  saveImageOnDevice(dataUrl, `${getMaskName()}.png`);
 }
 
 // --- GALLERY LOGIC (DYNAMIC, PNG ONLY) ---
@@ -2024,7 +2052,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareButton = document.getElementById('shareButton');
     if (shareButton) {
         shareButton.addEventListener('click', () => {
-            shareFacette().catch((err) => console.error('Share failed', err));
+            try {
+                shareFacette();
+            } catch (err) {
+                console.error('Share failed', err);
+            }
+        });
+    }
+    const closeSaveOverlay = document.getElementById('closeSaveOverlay');
+    const saveOverlay = document.getElementById('saveImageOverlay');
+    if (closeSaveOverlay) closeSaveOverlay.addEventListener('click', hideSaveOverlay);
+    if (saveOverlay) {
+        saveOverlay.addEventListener('click', (event) => {
+            if (event.target === saveOverlay) hideSaveOverlay();
         });
     }
 
