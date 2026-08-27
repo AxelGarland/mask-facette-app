@@ -703,12 +703,21 @@ h1 {
 
 .landing-brand {
   position: absolute;
-  top: 2rem;
-  left: 2rem;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 3;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  padding: 1.5rem 2rem 1.25rem;
+  background: rgba(8, 8, 8, 0.58);
+}
+
+.landing-brand .brand-mark,
+.landing-brand .brand-byline {
+  mix-blend-mode: normal;
+  color: #fff;
 }
 
 .brand-byline {
@@ -889,8 +898,7 @@ body {
   }
 
   .landing-brand {
-    top: 1.25rem;
-    left: 1.25rem;
+    padding: 1.15rem 1.25rem 1rem;
   }
 
   .landing-container .brand-mark {
