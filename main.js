@@ -770,67 +770,179 @@ function pickRandomWords(n = 10) {
     return pool.slice(0, n);
 }
 
-function articleFor(word) {
-    return /^[aeiou]/i.test(word) ? 'an' : 'a';
-}
-
-function capitalize(word) {
-    return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
 function pickOne(items) {
     return items[Math.floor(Math.random() * items.length)];
 }
 
-function dominantMood(words) {
-    const counts = { pos: 0, neu: 0, neg: 0, cha: 0 };
-    words.forEach((word) => {
-        if (WORD_CATEGORIES['Positive/Expressive'].includes(word)) counts.pos += 1;
-        else if (WORD_CATEGORIES['Neutral/Introspective'].includes(word)) counts.neu += 1;
-        else if (WORD_CATEGORIES['Negative/Anxious'].includes(word)) counts.neg += 1;
-        else counts.cha += 1;
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-}
+const WORD_PHRASES = {
+    confident: [
+        'Walked in like it paid for the building. It did not.',
+        'Has a plan. The plan is that it is already winning.',
+    ],
+    kind: [
+        'Would give you the last fry. Would remember you did not say thank you.',
+        'So nice it feels like a trap. It might be a trap. Still take the fry.',
+    ],
+    funny: [
+        'Would tell a joke at a funeral and then wait, politely, for the laugh.',
+        'Has a bit ready. Unfortunately the bit is you.',
+    ],
+    creative: [
+        'Has a project. The project is avoiding the other project.',
+        'Would rebrand a crisis and call it a chapter. Has a font picked out.',
+    ],
+    generous: [
+        'Would pay for dinner and then narrate the sacrifice.',
+        'Overshares money, time, and opinions. In that order, until it isn\'t.',
+    ],
+    expressive: [
+        'Has a face that cannot keep a secret. The secret is usually a feeling.',
+        'Would cry at an ad and then explain why the ad was actually about it.',
+    ],
+    joyful: [
+        'Too happy too early in the evening. Someone will pay for this later.',
+        'Brought the energy. Did not bring a ride home for the energy.',
+    ],
+    warm: [
+        'Makes soup. Makes you talk. Makes leaving feel rude.',
+        'Hugs like it means it. Stays like it might mean it.',
+    ],
+    caring: [
+        'Will check if you got home. Will also check if you ate. Will not check if you asked.',
+        'Loves you in a way that includes a lecture.',
+    ],
+    charismatic: [
+        'Could sell you a chair you already own. Would make you thank it.',
+        'The room leans in. The room should lean back.',
+    ],
+    calm: [
+        'Unbothered. Suspiciously unbothered. Something is being stored for later.',
+        'Speaking softly so the explosion has better acoustics.',
+    ],
+    curious: [
+        'Asks one more question after you were done talking. Then one more.',
+        'Doesn\'t gossip. Collects. This is worse.',
+    ],
+    sensitive: [
+        'Felt the vibe change from two rooms away. The vibe was about it.',
+        'Takes things personally. Some of those things were, to be fair, personal.',
+    ],
+    serious: [
+        'Did not get the bit. Will now explain the bit. The bit is dead.',
+        'Brought a thesis to a hangout. The hangout did not ask for a thesis.',
+    ],
+    private: [
+        'Has a whole life it will not be discussing. It will be discussing yours though.',
+        'Shares nothing and then is shocked you don\'t know it.',
+    ],
+    intense: [
+        'Eye contact like a job interview. You did not apply.',
+        'Does not do small talk. Does large talk, immediately, about fate.',
+    ],
+    thoughtful: [
+        'Wrote you a paragraph when a like would have done. The paragraph has structure.',
+        'Remembered your throwaway comment from March. Please be afraid.',
+    ],
+    structured: [
+        'Made a spreadsheet for a feeling. The feeling has columns now.',
+        'Color-coded its own breakdown. Very organized. Still a breakdown.',
+    ],
+    reserved: [
+        'Quiet until it isn\'t. When it isn\'t, write it down.',
+        'Saving it for later. Later is going to be a lot.',
+    ],
+    observant: [
+        'Saw what you did. Saw what you almost did. Has not blinked.',
+        'Notices the thing you hoped was invisible. Smiles. Does not mention it. Yet.',
+    ],
+    anxious: [
+        'Rehearsed this conversation in the shower, in the elevator, and once more just now.',
+        'Sent "on my way" from the bathroom and then had a thought. Several thoughts.',
+    ],
+    awkward: [
+        'Waved at someone who was waving at the person behind it. Kept waving. Committed.',
+        'The silence was normal until it apologized to the silence.',
+    ],
+    insecure: [
+        'Reread the text 11 times. The text was "ok".',
+        'Needs a little reassurance. Then a little more. Then a documentary about it.',
+    ],
+    too_much: [
+        'Arrived at 6 for an 8. Brought a cake, a speech, and a backup speech.',
+        'Nobody asked it to go that hard. It went that hard. It will go harder.',
+    ],
+    dramatic: [
+        'This is not a conversation. This is an episode. There will be a recap.',
+        'Has never had a small feeling. Has had lighting for the big ones.',
+    ],
+    needy: [
+        'Just checking in. And again. And again but in a cute way.',
+        'Wants to be close. Closer. Inside your phone. Living there. Paying no rent.',
+    ],
+    fake: [
+        'The laugh is real until you hear the second one.',
+        'So supportive. So shiny. So please don\'t look behind the poster.',
+    ],
+    intimidating: [
+        'Didn\'t do anything. The air just got worse.',
+        'Smiled. Everyone sat up straighter. Nobody knows why.',
+    ],
+    cold: [
+        'Would leave you on read in person.',
+        'Warmth is available. Warmth is not on the menu tonight.',
+    ],
+    passive: [
+        'Said "no worries" in a way that was, in fact, many worries.',
+        'Will not start it. Will also not end it. You live here now.',
+    ],
+    mysterious: [
+        'Has lore. Will not share the lore. Wants you to ask about the lore.',
+        'Showed up with a past and no footnotes.',
+    ],
+    chaotic: [
+        'Said "one drink." That was a lie with legs.',
+        'Has a system. The system is vibes and sudden decisions.',
+    ],
+    self_conscious: [
+        'Heard its own name from across the room and took it personally.',
+        'Checking its teeth in the back of a spoon. The spoon is judging back.',
+    ],
+    loud: [
+        'Does not have an inside voice. Has an amphitheater.',
+        'Entered the chat. The chat did not survive.',
+    ],
+    judgmental: [
+        'Already rated your apartment from the doorway.',
+        'Has notes. You did not ask for notes. The notes have a title.',
+    ],
+    defensive: [
+        'You didn\'t even say anything. It already wrote a rebuttal.',
+        'Calm down? It is calm. This is its calm. Please read the attached PDF.',
+    ],
+    detached: [
+        'Here in body. Out for lunch in spirit. Will not be taking questions.',
+        'Nodding. Not listening. Very at peace about that.',
+    ],
+    controlling: [
+        'Let me just fix that. And that. And the way you live.',
+        'Has a preferred seating chart for a picnic.',
+    ],
+    overbearing: [
+        'Helping. Helping so much. You cannot see the exit because of the help.',
+        'Love, but make it a group project it is directing.',
+    ],
+    forgettable: [
+        'Was just here. Give it a second. No, still gone.',
+        'The face you remember until you try to remember it.',
+    ],
+};
 
 function composePersonality(words) {
-    const w = words.map(displayWord);
-    const [a, b, c, d, e, f, g, h, i, j] = w;
-    const mood = dominantMood(words);
-    const openings = {
-        pos: [
-            'It comes forward first.',
-            'This one is easy to meet and harder to pin down.',
-        ],
-        neu: [
-            'It watches before it speaks.',
-            'Quiet at first. Then the rest shows.',
-        ],
-        neg: [
-            'It flinches, then looks back.',
-            'This one is already mid-thought.',
-        ],
-        cha: [
-            'It does not wait to be introduced.',
-            'This one arrives sideways.',
-        ],
-    };
-
-    const bodies = [
-        `${capitalize(a)} in the eyes, ${b} in the mouth. ${capitalize(c)} at the edges, ${d} underneath. People might call it ${e}; it also answers to ${f} and ${g}.`,
-        `A ${a}, ${b} face. ${capitalize(c)} on the surface, ${d} just behind it. The rest is ${e}, ${f}, and a stubborn ${g}.`,
-        `${capitalize(a)} first, then ${b}, then ${c}. Under that: ${d}, ${e}, ${f}. The last thing it gives you is ${g}.`,
-        `It wears ${articleFor(a)} ${a} look and ${articleFor(b)} ${b} one at the same time. Call it ${c} if you need a label. It also holds ${d}, ${e}, and ${f}.`,
-        `${capitalize(a)} and ${b} share the same face. ${capitalize(c)} keeps leaking through. The quieter notes are ${d}, ${e}, and ${f}.`,
-    ];
-
-    const closings = [
-        `It finishes ${h}, almost ${i}, never quite ${j}.`,
-        `Somewhere in there: ${h}, ${i}, and ${j}.`,
-        `What stays with you is the ${h}, then the ${i}, then the ${j}.`,
-    ];
-
-    return `${pickOne(openings[mood])} ${pickOne(bodies)} ${pickOne(closings)}`;
+    const withPhrases = words.filter((word) => WORD_PHRASES[word]?.length);
+    const word = pickOne(withPhrases.length ? withPhrases : words);
+    const phrases = WORD_PHRASES[word];
+    if (!phrases?.length) return 'This one showed up and refused to explain itself.';
+    return pickOne(phrases);
 }
 
 function waitForP5Ready() {
