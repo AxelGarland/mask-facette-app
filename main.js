@@ -505,7 +505,9 @@ const WORD_COLOR_MAP = {
   focused:         "#0053A0",
   thoughtfulAlt:   "#4E5AE8",
   introspective:   "#7851FF",
+  too_much:        "#A633FF",
   tooMuch:         "#A633FF",
+  self_conscious:  "#DA2787",
   selfConscious:   "#DA2787",
   loud:            "#F02E65",
   fake:            "#FF5F45",
@@ -525,6 +527,35 @@ const WORD_COLOR_MAP = {
   controlling:     "#CD853F",
   overbearing:     "#DC143C"
 };
+
+function colorForWord(word) {
+    const raw = String(word || '');
+    const underscored = raw.replace(/[- ]/g, '_').toLowerCase();
+    const squeezed = raw.replace(/[-_ ]/g, '').toLowerCase();
+    const camel = raw.replace(/[-_ ]+([a-zA-Z])/g, (_, letter) => letter.toUpperCase());
+    return WORD_COLOR_MAP[raw]
+        || WORD_COLOR_MAP[underscored]
+        || WORD_COLOR_MAP[squeezed]
+        || WORD_COLOR_MAP[camel]
+        || '#4AF2E5';
+}
+
+function inkForHex(hex) {
+    const value = String(hex).replace('#', '');
+    if (value.length !== 6) return '#111';
+    const r = parseInt(value.slice(0, 2), 16);
+    const g = parseInt(value.slice(2, 4), 16);
+    const b = parseInt(value.slice(4, 6), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 160 ? '#111' : '#fff';
+}
+
+function styleDownloadButton(hex) {
+    const downloadButton = document.getElementById('downloadButton');
+    if (!downloadButton) return;
+    downloadButton.style.setProperty('--facette-color', hex);
+    downloadButton.style.setProperty('--facette-ink', inkForHex(hex));
+}
 
 // --- Main App Logic ---
 const WORD_CATEGORIES = {
@@ -623,21 +654,8 @@ const sketch = (p) => {
 
         // Use the 10th word to determine the color
         const paletteWord = wordsToDraw[9];
-        // Normalize the key to match the mapping (remove spaces, hyphens, lowercase)
-        const colorKey = paletteWord.replace(/[-_ ]/g, '').toLowerCase();
-        const camelCaseKey = paletteWord.replace(/[-_ ]([a-z])/g, (match, letter) => letter.toUpperCase());
-        let colA = WORD_COLOR_MAP[paletteWord] || WORD_COLOR_MAP[colorKey] || WORD_COLOR_MAP[camelCaseKey] || "#4AF2E5";
-        let colB = colA; // No duotone, just use the same color
-        
-        // Debug logging for color mapping
-        console.log(`Color mapping debug:`);
-        console.log(`  Original word: "${paletteWord}"`);
-        console.log(`  Normalized key: "${colorKey}"`);
-        console.log(`  CamelCase key: "${camelCaseKey}"`);
-        console.log(`  Found color: ${colA}`);
-        console.log(`  Direct match: ${WORD_COLOR_MAP[paletteWord] ? 'YES' : 'NO'}`);
-        console.log(`  Normalized match: ${WORD_COLOR_MAP[colorKey] ? 'YES' : 'NO'}`);
-        console.log(`  CamelCase match: ${WORD_COLOR_MAP[camelCaseKey] ? 'YES' : 'NO'}`);
+        let colA = colorForWord(paletteWord);
+        let colB = colA;
 
         // --- Draw all mask panels per mapping ---
         // Word 1: Frame (A1, A5)
@@ -977,6 +995,8 @@ function startRandomFacette() {
     if (galleryOverlay) galleryOverlay.style.display = 'none';
     if (nameInput) nameInput.value = '';
     if (downloadButton) downloadButton.disabled = true;
+    const shareButton = document.getElementById('shareButton');
+    if (shareButton) shareButton.disabled = true;
 
     selectedWords = pickRandomWords(10);
     if (blurb) blurb.textContent = composePersonality(selectedWords);
@@ -996,8 +1016,14 @@ function generateMask() {
     const normalizedWords = selectedWords.map(normalizeWordKey);
     if (p5Instance && typeof p5Instance.updateWithWords === 'function') {
         p5Instance.updateWithWords(normalizedWords);
+        const facetteColor = colorForWord(normalizedWords[9]);
         const downloadButton = document.getElementById('downloadButton');
-        if (downloadButton) downloadButton.disabled = false;
+        if (downloadButton) {
+            downloadButton.disabled = false;
+            styleDownloadButton(facetteColor);
+        }
+        const shareButton = document.getElementById('shareButton');
+        if (shareButton) shareButton.disabled = false;
     } else {
         console.error('p5Instance not available or updateWithWords not a function');
     }
@@ -1051,6 +1077,149 @@ function getMaskName() {
     return input.value.trim();
   }
   return 'MASK';
+}
+
+function givenFacetteName() {
+  const input = document.getElementById('maskNameInput');
+  return input ? input.value.trim() : '';
+}
+
+function wrapCanvasLines(ctx, text, maxWidth) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (ctx.measureText(next).width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function blobFromCanvas(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) reject(new Error('Could not export image'));
+      else resolve(blob);
+    }, 'image/png');
+  });
+}
+
+function triggerBlobDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function composeShareCard() {
+  const source = document.querySelector('#maskCanvas canvas');
+  if (!source) throw new Error('No facette to share');
+
+  const color = colorForWord(selectedWords[9] || '');
+  const name = givenFacetteName();
+  const blurb = document.getElementById('personalityBlurb')?.textContent?.trim() || '';
+
+  try {
+    await document.fonts.ready;
+  } catch (err) {
+    console.warn('Fonts not ready for share card', err);
+  }
+
+  const width = 1080;
+  const height = 1920;
+  const card = document.createElement('canvas');
+  card.width = width;
+  card.height = height;
+  const ctx = card.getContext('2d');
+
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 42px "Space Grotesk", sans-serif';
+  ctx.letterSpacing = '0.18em';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('FACETTES', width / 2, 120);
+  ctx.letterSpacing = '0';
+
+  const portrait = 800;
+  const px = (width - portrait) / 2;
+  const py = 250;
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 90;
+  ctx.drawImage(source, px, py, portrait, portrait);
+  ctx.restore();
+
+  let textY = py + portrait + 80;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  if (name) {
+    ctx.fillStyle = color;
+    ctx.font = '700 64px "Space Grotesk", sans-serif';
+    ctx.fillText(name, width / 2, textY);
+    textY += 96;
+  }
+
+  if (blurb) {
+    ctx.fillStyle = '#fff';
+    ctx.font = '500 36px "Space Grotesk", sans-serif';
+    const lines = wrapCanvasLines(ctx, blurb, 820);
+    lines.slice(0, 6).forEach((line, index) => {
+      ctx.fillText(line, width / 2, textY + index * 48);
+    });
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '500 24px "Space Grotesk", sans-serif';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('By Axel Garland', width / 2, height - 100);
+
+  return card;
+}
+
+function shareCaption() {
+  const name = givenFacetteName();
+  const blurb = document.getElementById('personalityBlurb')?.textContent?.trim() || '';
+  return [name, blurb, 'FACETTES by Axel Garland'].filter(Boolean).join('\n');
+}
+
+async function shareFacette() {
+  const name = givenFacetteName() || 'FACETTE';
+  const filename = `${name}.png`;
+  const card = await composeShareCard();
+  const blob = await blobFromCanvas(card);
+  const file = new File([blob], filename, { type: 'image/png' });
+  const caption = shareCaption();
+  const payload = { files: [file], title: name, text: caption };
+
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share(payload);
+      return;
+    }
+    if (typeof navigator.share === 'function' && !navigator.canShare) {
+      await navigator.share(payload);
+      return;
+    }
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+    console.warn('Native share failed, saving image instead', err);
+  }
+
+  triggerBlobDownload(blob, filename);
 }
 
 function downloadMask() {
@@ -1850,6 +2019,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (downloadButton) {
         downloadButton.addEventListener('click', () => {
             downloadMask();
+        });
+    }
+    const shareButton = document.getElementById('shareButton');
+    if (shareButton) {
+        shareButton.addEventListener('click', () => {
+            shareFacette().catch((err) => console.error('Share failed', err));
         });
     }
 

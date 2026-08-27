@@ -91,9 +91,49 @@ h1 {
 .draw-another {
   background: #111;
   color: #fff;
+  margin: 0;
 }
 
 .draw-another:hover {
+  transform: translateY(-2px);
+}
+
+.download-facette {
+  margin: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  background: var(--facette-color, #111);
+  color: var(--facette-ink, #fff);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--facette-color, #111) 42%, transparent);
+}
+
+.download-facette:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.download-facette:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: saturate(1.08) brightness(1.06);
+}
+
+.share-facette {
+  margin: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  background: #fff;
+  color: #111;
+}
+
+.share-facette:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.share-facette:not(:disabled):hover {
   transform: translateY(-2px);
 }
 
