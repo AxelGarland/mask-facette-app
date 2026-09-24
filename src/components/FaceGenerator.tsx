@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateMaskSVG, svgToPNG } from '../utils/svgRenderer';
+import { generateFaceSVG, svgToPNG } from '../utils/svgRenderer';
 
 const WORDS = [
   'joyful', 'kind', 'funny', 'creative', 'generous', 'expressive', 'warm', 'caring', 'charismatic', 'calm',
@@ -8,8 +8,8 @@ const WORDS = [
   'chaotic', 'self_conscious', 'loud', 'judgmental', 'defensive', 'detached', 'controlling', 'overbearing', 'forgettable'
 ];
 
-export default function MaskGenerator({ onSave }: { onSave?: (mask: any) => void }) {
-  const [maskName, setMaskName] = useState('');
+export default function FaceGenerator({ onSave }: { onSave?: (face: any) => void }) {
+  const [faceName, setFaceName] = useState('');
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [generated, setGenerated] = useState(false);
   const [svgContent, setSvgContent] = useState('');
@@ -23,8 +23,8 @@ export default function MaskGenerator({ onSave }: { onSave?: (mask: any) => void
   }
 
   function handleGenerate() {
-    if (selectedWords.length === 10 && maskName) {
-      const svg = generateMaskSVG(selectedWords);
+    if (selectedWords.length === 10 && faceName) {
+      const svg = generateFaceSVG(selectedWords);
       setSvgContent(svg);
       setGenerated(true);
     }
@@ -36,13 +36,13 @@ export default function MaskGenerator({ onSave }: { onSave?: (mask: any) => void
         // Convert SVG to PNG for server upload
         const pngBlob = await svgToPNG(svgContent);
         
-        // Create a unique filename based on mask name
-        const sanitizedName = maskName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        // Create a unique filename based on face name
+        const sanitizedName = faceName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
         const timestamp = Date.now();
         const filename = `${sanitizedName}_${timestamp}.png`;
         
         onSave({ 
-          name: maskName, 
+          name: faceName, 
           words: selectedWords, 
           filename,
           svgContent,
@@ -50,25 +50,25 @@ export default function MaskGenerator({ onSave }: { onSave?: (mask: any) => void
         });
         
         // Reset form
-        setMaskName('');
+        setFaceName('');
         setSelectedWords([]);
         setGenerated(false);
         setSvgContent('');
       } catch (error) {
-        console.error('Failed to save mask:', error);
-        alert('Failed to save mask. Please try again.');
+        console.error('Failed to save face:', error);
+        alert('Failed to save face. Please try again.');
       }
     }
   }
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow">
-      <h2 className="text-xl font-bold mb-4">Create a Mask</h2>
+      <h2 className="text-xl font-bold mb-4">Create a Face</h2>
       <input
         className="border p-2 rounded w-full mb-4"
-        placeholder="Mask name"
-        value={maskName}
-        onChange={e => setMaskName(e.target.value)}
+        placeholder="Face name"
+        value={faceName}
+        onChange={e => setFaceName(e.target.value)}
       />
       <div className="mb-4">
         <div className="mb-2 font-semibold">Choose 10 words:</div>
@@ -91,12 +91,12 @@ export default function MaskGenerator({ onSave }: { onSave?: (mask: any) => void
       <button
         className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
         onClick={handleGenerate}
-        disabled={selectedWords.length !== 10 || !maskName}
+        disabled={selectedWords.length !== 10 || !faceName}
       >
-        Generate Mask
+        Generate Face
       </button>
       <div className="my-6 h-64 flex items-center justify-center border rounded bg-gray-50">
-        {/* Real mask preview SVG */}
+        {/* Real face preview SVG */}
         {generated && svgContent ? (
           <div dangerouslySetInnerHTML={{ __html: svgContent }} />
         ) : (

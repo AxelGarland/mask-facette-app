@@ -18,13 +18,13 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     // Save with unique timestamp name
     const ext = path.extname(file.originalname);
-    cb(null, 'mask_' + Date.now() + ext);
+    cb(null, 'face_' + Date.now() + ext);
   }
 });
 const upload = multer({ storage: storage });
 
 // Upload endpoint
-app.post('/upload-mask', upload.single('mask'), (req, res) => {
+app.post('/upload-face', upload.single('face'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   // Get metadata from request body (name, adjectives)
@@ -75,8 +75,8 @@ app.get('/gallery-list', (req, res) => {
   });
 });
 
-// Delete a mask from gallery
-app.delete('/delete-mask/:filename', (req, res) => {
+// Delete a face from gallery
+app.delete('/delete-face/:filename', (req, res) => {
   const filename = req.params.filename;
   const filepath = path.join(__dirname, 'gallery', filename);
   

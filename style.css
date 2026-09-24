@@ -98,28 +98,28 @@ h1 {
   transform: translateY(-2px);
 }
 
-.download-facette {
+.download-face {
   margin: 0;
   border-radius: 8px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  background: var(--facette-color, #111);
-  color: var(--facette-ink, #fff);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--facette-color, #111) 42%, transparent);
+  background: var(--face-color, #111);
+  color: var(--face-ink, #fff);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--face-color, #111) 42%, transparent);
 }
 
-.download-facette:disabled {
+.download-face:disabled {
   opacity: 0.4;
   box-shadow: none;
   cursor: not-allowed;
 }
 
-.download-facette:not(:disabled):hover {
+.download-face:not(:disabled):hover {
   transform: translateY(-2px);
   filter: saturate(1.08) brightness(1.06);
 }
 
-.share-facette {
+.share-face {
   margin: 0;
   border-radius: 8px;
   font-weight: 600;
@@ -128,12 +128,12 @@ h1 {
   color: #111;
 }
 
-.share-facette:disabled {
+.share-face:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.share-facette:not(:disabled):hover {
+.share-face:not(:disabled):hover {
   transform: translateY(-2px);
 }
 
@@ -261,7 +261,7 @@ h1 {
   pointer-events: none;
 }
 
-.generate-facette {
+.generate-face {
   background: rgba(17, 17, 17, 0.3);
   color: rgba(255, 255, 255, 0.5);
   border: 2px solid transparent;
@@ -275,17 +275,17 @@ h1 {
   transition: background 0.25s cubic-bezier(0.32, 0.72, 0, 1), color 0.25s, transform 0.2s;
 }
 
-.generate-facette:not(:disabled) {
+.generate-face:not(:disabled) {
   background: #111;
   color: #fff;
   cursor: pointer;
 }
 
-.generate-facette:not(:disabled):hover {
+.generate-face:not(:disabled):hover {
   transform: translateY(-2px);
 }
 
-.generate-facette:not(:disabled):active {
+.generate-face:not(:disabled):active {
   transform: scale(0.98);
 }
 
@@ -346,7 +346,7 @@ h1 {
   border-color: #007bff;
 }
 
-#maskCanvas {
+#faceCanvas {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -355,7 +355,7 @@ h1 {
   width: 100%;
 }
 
-#maskCanvas canvas,
+#faceCanvas canvas,
 .reveal-portrait canvas {
   position: relative;
   z-index: 1;
@@ -659,7 +659,7 @@ h1 {
   background: transparent !important;
 }
 
-#maskApp {
+#faceApp {
   position: relative;
   z-index: 2;
   background: transparent !important;
@@ -1090,14 +1090,14 @@ body.about-open {
   outline-offset: 4px;
 }
 
-.about-mask {
+.about-face {
   margin: 0;
   position: sticky;
   top: 2.5rem;
   isolation: isolate;
 }
 
-.about-mask-grid {
+.about-face-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   width: 100%;
@@ -1106,7 +1106,7 @@ body.about-open {
   isolation: isolate;
 }
 
-.about-mask-grid img {
+.about-face-grid img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1120,11 +1120,11 @@ body.about-open {
 
 @media (prefers-reduced-motion: no-preference) {
   .about-overlay:not(.hidden) .about-copy,
-  .about-overlay:not(.hidden) .about-mask {
+  .about-overlay:not(.hidden) .about-face {
     animation: about-rise 0.7s cubic-bezier(0.32, 0.72, 0, 1) both;
   }
 
-  .about-overlay:not(.hidden) .about-mask {
+  .about-overlay:not(.hidden) .about-face {
     animation-delay: 0.08s;
   }
 }
@@ -1158,7 +1158,7 @@ body.about-open {
     gap: 2rem;
   }
 
-  .about-mask {
+  .about-face {
     position: static;
     order: -1;
     max-width: 26rem;

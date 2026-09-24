@@ -2,28 +2,200 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FACETTES</title>
+    <title>Kindred</title>
+    <meta name="description" content="Kindred is a poster collection of faces where hand-drawn illustration meets coded rules of symmetry. Of the same kind, never the same.">
+    <meta name="theme-color" content="#07090A">
     <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=space-grotesk@500;600;700&display=swap">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="kindred.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   </head>
   <body>
     <!-- Animated tile field (always running) -->
     <div id="tileBackground"></div>
 
-    <div class="landing-container">
-      <div class="landing-brand">
-        <div class="brand-mark">FACETTES</div>
-        <p class="brand-byline">By Axel Garland</p>
-      </div>
-      <button type="button" class="cta-create" id="newFacetteBtn">Create a facette</button>
+    <div id="kindred" class="landing-container">
+      <header class="k-nav">
+        <a class="k-mark" href="#top" aria-label="Kindred, back to top">KINDRED</a>
+        <nav class="k-links" aria-label="Sections">
+          <a href="#rules">The rules</a>
+          <a href="#posters">Posters</a>
+        </nav>
+        <div class="k-nav-actions">
+          <button type="button" id="tryItBtn" class="k-btn k-btn--ghost">Try it out</button>
+          <a class="k-btn k-btn--solid" href="#inquire">Inquire</a>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" id="top">
+          <div class="hero-copy">
+            <h1>Of the same kind. Never the same.</h1>
+            <p class="hero-sub">Hand-drawn tiles, coded rules of symmetry. Every face is different, and every face is kin.</p>
+            <div class="hero-cta">
+              <a class="k-btn k-btn--solid" href="#inquire">Inquire</a>
+              <a class="k-btn k-btn--ghost" href="#rules">See the rules</a>
+            </div>
+          </div>
+          <div class="hero-crowd" id="heroCrowd" role="img" aria-label="A poster-sized crowd of twelve generated faces. One face at a time rebuilds itself."></div>
+        </section>
+
+        <section class="sec sec--rules" id="rules">
+          <div class="rules-copy reveal">
+            <h2>Twenty-five cells, nine jobs.</h2>
+            <p>Every face sits on the same 5 by 5 grid. Each cell belongs to one part of the face.</p>
+            <div class="role-chips" id="roleChips" role="group" aria-label="Highlight a part of the face"></div>
+            <p class="role-readout" id="roleReadout" aria-live="polite">Pick a part, or hover a cell.</p>
+            <label class="k-switch">
+              <input type="checkbox" id="gridToggle" checked>
+              <span>Grid lines</span>
+            </label>
+          </div>
+          <div class="specimen reveal" id="specimen"></div>
+        </section>
+
+        <section class="sec sec--tiles" id="tiles">
+          <div class="sec-head reveal">
+            <h2>Twenty-seven tiles.</h2>
+            <p>Every shape in every face comes from this sheet. Turn a tile and flip it: one shape, up to eight positions.</p>
+          </div>
+          <div class="tint reveal" id="tintRow" role="group" aria-label="Tint the sheet"></div>
+          <div class="sheet reveal" id="tileSheet"></div>
+          <p class="hint" id="tileHint">Tap a tile to turn it.</p>
+        </section>
+
+        <section class="sec sec--sym" id="symmetry">
+          <div class="sym-stage reveal" id="symStage"></div>
+          <div class="sym-panel reveal">
+            <h2>Draw half. Mirror the rest.</h2>
+            <p>Ten words build each face, one part at a time. Nine choose tiles, the tenth chooses the colour.</p>
+            <div class="step-card" id="stepCard" aria-live="polite"></div>
+            <div class="step-controls">
+              <button type="button" class="k-btn k-btn--ghost" id="stepBack">Back</button>
+              <button type="button" class="k-btn k-btn--solid" id="stepPlay">Play</button>
+              <button type="button" class="k-btn k-btn--ghost" id="stepNext">Next</button>
+            </div>
+            <div class="step-rail" id="stepRail" role="group" aria-label="Choose a step"></div>
+            <p class="legend"><span class="key key--solid"></span>drawn <span class="key key--dash"></span>mirrored or copied</p>
+          </div>
+        </section>
+
+        <section class="sec sec--dna" id="dna">
+          <div class="sec-head reveal">
+            <h2>One word apart.</h2>
+            <p>Swap a single word and only a few tiles change. The rest stays put, which is why the faces read as family.</p>
+          </div>
+          <div class="dna-pair reveal">
+            <figure class="dna-face"><div id="dnaParent"></div><figcaption>Parent</figcaption></figure>
+            <figure class="dna-face"><div id="dnaChild"></div><figcaption>Relative</figcaption></figure>
+          </div>
+          <div class="dna-words reveal" id="dnaWords" role="group" aria-label="Swap one word"></div>
+          <div class="dna-foot reveal">
+            <p class="dna-readout" id="dnaReadout" aria-live="polite"></p>
+            <button type="button" class="k-btn k-btn--ghost" id="dnaShuffle">New parent</button>
+          </div>
+        </section>
+
+        <section class="sec sec--roll" id="roll">
+          <div class="sec-head reveal">
+            <h2>Add a relative.</h2>
+            <p>Roll ten words and a new face joins the line. The tiles are drawn by hand, the combinations are not.</p>
+          </div>
+          <div class="roll-stage reveal">
+            <div class="roll-current">
+              <div id="rollFace"></div>
+              <ol class="roll-words" id="rollWords" aria-label="The ten words behind this face"></ol>
+            </div>
+            <div class="roll-line" id="rollLine" aria-label="Faces rolled so far"></div>
+          </div>
+          <div class="roll-actions reveal">
+            <button type="button" class="k-btn k-btn--solid" id="rollBtn">Roll</button>
+            <button type="button" class="k-btn k-btn--ghost" data-make>Try it out</button>
+            <p class="roll-count" id="rollCount"></p>
+          </div>
+        </section>
+
+        <section class="sec sec--paper sec--posters" id="posters">
+          <div class="sec-head reveal">
+            <h2>Crowds for the wall.</h2>
+            <p>Each poster is a crowd of twelve faces drawn from the same rules. Choose one to see it framed.</p>
+          </div>
+          <div class="posters-grid">
+            <div class="viewer reveal">
+              <div class="viewer-tabs" id="viewTabs" role="tablist" aria-label="View"></div>
+              <div class="viewer-stage" id="viewStage"></div>
+            </div>
+            <aside class="poster-info reveal">
+              <h3 id="posterName">Crowd 01</h3>
+              <dl class="specs" id="posterSpecs"></dl>
+              <a class="k-btn k-btn--solid" id="posterInquire" href="#inquire">Inquire</a>
+            </aside>
+          </div>
+          <div class="shelf" id="shelf" role="group" aria-label="Choose a poster"></div>
+        </section>
+
+        <section class="sec sec--paper sec--inquire" id="inquire">
+          <div class="inquire-wrap reveal">
+            <h2>Ask about a poster.</h2>
+            <p>Tell me which crowd you want and where it will hang. I reply by email with sizes, price and shipping.</p>
+            <form class="form" id="inquiryForm" novalidate>
+              <div class="field">
+                <label for="fName">Your name</label>
+                <input id="fName" name="name" type="text" autocomplete="name" required>
+                <p class="error" id="fNameErr" hidden>Please add your name.</p>
+              </div>
+              <div class="field">
+                <label for="fEmail">Your email</label>
+                <input id="fEmail" name="email" type="email" autocomplete="email" required>
+                <p class="error" id="fEmailErr" hidden>Please add an email I can reply to.</p>
+              </div>
+              <div class="field">
+                <label for="fPoster">Poster</label>
+                <select id="fPoster" name="poster"></select>
+              </div>
+              <div class="field">
+                <label for="fNote">Anything else <span class="opt">(optional)</span></label>
+                <textarea id="fNote" name="note" rows="4"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="k-btn k-btn--dark">Send</button>
+              </div>
+            </form>
+            <div class="sent" id="inquirySent" hidden>
+              <h3>Your mail app should be opening.</h3>
+              <p>If nothing happened, copy the message below and send it to <strong id="sentAddress"></strong>.</p>
+              <pre id="sentBody"></pre>
+              <button type="button" class="k-btn k-btn--dark" id="copyInquiry">Copy message</button>
+            </div>
+          </div>
+          <figure class="inquire-preview reveal" id="inquirePreview">
+            <img alt="" width="842" height="1191">
+            <figcaption></figcaption>
+          </figure>
+        </section>
+      </main>
+
+      <footer class="k-foot">
+        <div class="foot-faces" id="footFaces" aria-hidden="true"></div>
+        <div class="foot-row">
+          <p class="foot-mark">KINDRED</p>
+          <p class="foot-line">We are all made from the same parts.</p>
+          <div class="foot-links">
+            <button type="button" class="k-link" data-make>Try it out</button>
+            <a class="k-link" href="#inquire">Inquire</a>
+          </div>
+        </div>
+      </footer>
     </div>
 
-    <div id="maskApp" class="picker-app hidden">
+    <div id="faceApp" class="picker-app hidden">
       <div class="picker-top">
-        <div class="brand-mark">FACETTES</div>
+        <div class="brand-mark">KINDRED</div>
         <button type="button" id="backToHomeBtn" class="picker-close" aria-label="Back to home">
           <svg width="32" height="32" viewBox="0 0 38 38" fill="none" aria-hidden="true">
             <path d="M10 10L28 28M28 10L10 28" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -33,17 +205,17 @@
 
       <div class="reveal-stage">
         <div class="reveal-portrait" id="revealPortrait">
-          <div id="maskCanvas"></div>
+          <div id="faceCanvas"></div>
         </div>
         <div class="reveal-copy">
           <p id="personalityBlurb" class="personality-blurb"></p>
           <div class="name-section">
-            <input type="text" id="maskNameInput" placeholder="GIVE IT A NAME" maxlength="32" autocomplete="off" />
-            <button type="button" id="saveMaskBtn" class="btn">Save</button>
+            <input type="text" id="faceNameInput" placeholder="GIVE IT A NAME" maxlength="32" autocomplete="off" />
+            <button type="button" id="saveFaceBtn" class="btn">Save</button>
           </div>
           <div class="reveal-actions">
-            <button type="button" id="downloadButton" class="btn download-facette" disabled>Download</button>
-            <button type="button" id="shareButton" class="btn share-facette" disabled>Share</button>
+            <button type="button" id="downloadButton" class="btn download-face" disabled>Download</button>
+            <button type="button" id="shareButton" class="btn share-face" disabled>Share</button>
             <button type="button" id="drawAnotherBtn" class="btn draw-another">Draw another</button>
           </div>
         </div>
@@ -80,9 +252,10 @@
         </svg>
       </button>
       <p class="save-overlay-hint">Hold the image to save it</p>
-      <img id="saveOverlayImage" alt="Facette">
+      <img id="saveOverlayImage" alt="Face">
     </div>
 
     <script type="module" src="/main.js"></script>
+    <script type="module" src="/landing.js"></script>
   </body>
 </html>

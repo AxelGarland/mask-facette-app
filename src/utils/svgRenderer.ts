@@ -1,4 +1,4 @@
-import { WORD_PANEL_MAP, WORD_TILE_MAP, WORD_COLOR_MAP, GRID_CELLS, normalizeWordKey } from './maskData';
+import { WORD_PANEL_MAP, WORD_TILE_MAP, WORD_COLOR_MAP, GRID_CELLS, normalizeWordKey } from './faceData';
 
 export interface TileRenderData {
   cellKey: string;
@@ -9,7 +9,7 @@ export interface TileRenderData {
   colB: string;
 }
 
-export function generateMaskSVG(selectedWords: string[]): string {
+export function generateFaceSVG(selectedWords: string[]): string {
   if (selectedWords.length !== 10) {
     return '';
   }

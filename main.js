@@ -553,8 +553,8 @@ function inkForHex(hex) {
 function styleDownloadButton(hex) {
     const downloadButton = document.getElementById('downloadButton');
     if (!downloadButton) return;
-    downloadButton.style.setProperty('--facette-color', hex);
-    downloadButton.style.setProperty('--facette-ink', inkForHex(hex));
+    downloadButton.style.setProperty('--face-color', hex);
+    downloadButton.style.setProperty('--face-ink', inkForHex(hex));
 }
 
 // --- Main App Logic ---
@@ -570,10 +570,10 @@ let p5Instance;
 let svgTiles = [];
 let cellSize;
 
-// Ensure p5Instance is created and attached to #maskCanvas when facette UI is shown
+// Ensure p5Instance is created and attached to #faceCanvas when face UI is shown
 function ensureP5Instance() {
     if (!p5Instance) {
-        p5Instance = new p5(sketch, 'maskCanvas');
+        p5Instance = new p5(sketch, 'faceCanvas');
     }
 }
 
@@ -629,7 +629,7 @@ const sketch = (p) => {
     p.setup = () => {
         console.log('p5 setup started');
         const canvas = p.createCanvas(600, 600);
-        canvas.parent("maskCanvas");
+        canvas.parent("faceCanvas");
         p.colorMode(p.RGB, 255, 255, 255, 255);
         cellSize = p.width / 5;
         p.noLoop();
@@ -650,14 +650,14 @@ const sketch = (p) => {
             console.log('Not enough words, returning');
             return;
         }
-        console.log('Starting to draw mask with words:', wordsToDraw);
+        console.log('Starting to draw face with words:', wordsToDraw);
 
         // Use the 10th word to determine the color
         const paletteWord = wordsToDraw[9];
         let colA = colorForWord(paletteWord);
         let colB = colA;
 
-        // --- Draw all mask panels per mapping ---
+        // --- Draw all face panels per mapping ---
         // Word 1: Frame (A1, A5)
         {
           const word = wordsToDraw[0];
@@ -967,7 +967,7 @@ function waitForP5Ready() {
     return new Promise((resolve, reject) => {
         const started = Date.now();
         const tick = () => {
-            const canvasReady = Boolean(document.querySelector('#maskCanvas canvas'));
+            const canvasReady = Boolean(document.querySelector('#faceCanvas canvas'));
             if (p5Instance && typeof p5Instance.updateWithWords === 'function' && canvasReady) {
                 resolve();
                 return;
@@ -982,16 +982,16 @@ function waitForP5Ready() {
     });
 }
 
-function startRandomFacette() {
+function startRandomFace() {
     const landing = document.querySelector('.landing-container');
-    const maskApp = document.getElementById('maskApp');
-    const nameInput = document.getElementById('maskNameInput');
+    const faceApp = document.getElementById('faceApp');
+    const nameInput = document.getElementById('faceNameInput');
     const blurb = document.getElementById('personalityBlurb');
     const downloadButton = document.getElementById('downloadButton');
     const galleryOverlay = document.getElementById('galleryOverlay');
 
     if (landing) landing.classList.add('hidden');
-    if (maskApp) maskApp.classList.remove('hidden');
+    if (faceApp) faceApp.classList.remove('hidden');
     if (galleryOverlay) galleryOverlay.style.display = 'none';
     if (nameInput) nameInput.value = '';
     if (downloadButton) downloadButton.disabled = true;
@@ -1003,24 +1003,24 @@ function startRandomFacette() {
 
     ensureP5Instance();
     waitForP5Ready()
-        .then(() => generateMask())
-        .catch((err) => console.error('Could not draw facette', err));
+        .then(() => generateFace())
+        .catch((err) => console.error('Could not draw face', err));
 }
 
 function normalizeWordKey(word) {
   return word.replace(/[- ]/g, '_').toLowerCase();
 }
 
-function generateMask() {
+function generateFace() {
     if (selectedWords.length !== 10) return;
     const normalizedWords = selectedWords.map(normalizeWordKey);
     if (p5Instance && typeof p5Instance.updateWithWords === 'function') {
         p5Instance.updateWithWords(normalizedWords);
-        const facetteColor = colorForWord(normalizedWords[9]);
+        const faceColor = colorForWord(normalizedWords[9]);
         const downloadButton = document.getElementById('downloadButton');
         if (downloadButton) {
             downloadButton.disabled = false;
-            styleDownloadButton(facetteColor);
+            styleDownloadButton(faceColor);
         }
         const shareButton = document.getElementById('shareButton');
         if (shareButton) shareButton.disabled = false;
@@ -1029,58 +1029,58 @@ function generateMask() {
     }
 }
 
-// Ensure mask name input is always uppercase
-const maskNameInput = document.getElementById('maskNameInput');
-const saveMaskBtn = document.getElementById('saveMaskBtn');
-if (maskNameInput) {
-    maskNameInput.addEventListener('input', function() {
+// Ensure face name input is always uppercase
+const faceNameInput = document.getElementById('faceNameInput');
+const saveFaceBtn = document.getElementById('saveFaceBtn');
+if (faceNameInput) {
+    faceNameInput.addEventListener('input', function() {
         this.value = this.value.toUpperCase();
     });
 }
-if (saveMaskBtn) {
-    saveMaskBtn.addEventListener('click', function() {
-        const name = maskNameInput.value.trim();
-        const canvas = document.querySelector('#maskCanvas canvas');
+if (saveFaceBtn) {
+    saveFaceBtn.addEventListener('click', function() {
+        const name = faceNameInput.value.trim();
+        const canvas = document.querySelector('#faceCanvas canvas');
         console.log('Save button clicked!');
         console.log('Name:', name);
         console.log('Canvas found:', canvas);
         console.log('selectedWords:', selectedWords);
-        console.log('saveMaskToGallery function exists:', typeof saveMaskToGallery === 'function');
+        console.log('saveFaceToGallery function exists:', typeof saveFaceToGallery === 'function');
         
-        if (name && canvas && typeof saveMaskToGallery === 'function') {
-            console.log('Attempting to save mask...');
-            saveMaskToGallery(canvas, name, selectedWords)
+        if (name && canvas && typeof saveFaceToGallery === 'function') {
+            console.log('Attempting to save face...');
+            saveFaceToGallery(canvas, name, selectedWords)
                 .then(() => {
-                    console.log('Mask saved successfully!');
-                    alert('Mask saved to gallery!');
+                    console.log('Face saved successfully!');
+                    alert('Face saved to gallery!');
                     // Clear the name input
-                    maskNameInput.value = '';
+                    faceNameInput.value = '';
                     // Refresh the gallery
                     renderGalleryGrid();
                 })
                 .catch(error => {
-                    console.error('Failed to save mask:', error);
-                    alert('Failed to save mask. Please try again.');
+                    console.error('Failed to save face:', error);
+                    alert('Failed to save face. Please try again.');
                 });
         } else {
             console.log('Cannot save: missing name, canvas, or function');
             if (!name) console.log('Missing name');
             if (!canvas) console.log('Missing canvas');
-            if (typeof saveMaskToGallery !== 'function') console.log('Missing saveMaskToGallery function');
+            if (typeof saveFaceToGallery !== 'function') console.log('Missing saveFaceToGallery function');
         }
     });
 }
 
-function getMaskName() {
-  const input = document.getElementById('maskNameInput');
+function getFaceName() {
+  const input = document.getElementById('faceNameInput');
   if (input && input.value.trim()) {
     return input.value.trim();
   }
-  return 'MASK';
+  return 'FACE';
 }
 
-function givenFacetteName() {
-  const input = document.getElementById('maskNameInput');
+function givenFaceName() {
+  const input = document.getElementById('faceNameInput');
   return input ? input.value.trim() : '';
 }
 
@@ -1172,11 +1172,11 @@ function saveImageOnDevice(dataUrl, filename, shareText) {
 }
 
 function composeShareCard() {
-  const source = document.querySelector('#maskCanvas canvas');
-  if (!source) throw new Error('No facette to share');
+  const source = document.querySelector('#faceCanvas canvas');
+  if (!source) throw new Error('No face to share');
 
   const color = colorForWord(selectedWords[9] || '');
-  const name = givenFacetteName();
+  const name = givenFaceName();
   const blurb = document.getElementById('personalityBlurb')?.textContent?.trim() || '';
 
   const width = 1080;
@@ -1194,7 +1194,7 @@ function composeShareCard() {
   ctx.letterSpacing = '0.18em';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText('FACETTES', width / 2, 120);
+  ctx.fillText('KINDRED', width / 2, 120);
   ctx.letterSpacing = '0';
 
   const portrait = 800;
@@ -1235,24 +1235,24 @@ function composeShareCard() {
 }
 
 function shareCaption() {
-  const name = givenFacetteName();
+  const name = givenFaceName();
   const blurb = document.getElementById('personalityBlurb')?.textContent?.trim() || '';
-  return [name, blurb, 'FACETTES by Axel Garland'].filter(Boolean).join('\n');
+  return [name, blurb, 'KINDRED'].filter(Boolean).join('\n');
 }
 
-function shareFacette() {
-  const name = givenFacetteName() || 'FACETTE';
+function shareFace() {
+  const name = givenFaceName() || 'KINDRED';
   const filename = `${name}.png`;
   const card = composeShareCard();
   const dataUrl = exportCanvasDataUrl(card);
   saveImageOnDevice(dataUrl, filename, shareCaption());
 }
 
-function downloadMask() {
-  const canvas = document.querySelector('#maskCanvas canvas');
+function downloadFace() {
+  const canvas = document.querySelector('#faceCanvas canvas');
   if (!canvas) return;
   const dataUrl = exportCanvasDataUrl(canvas);
-  saveImageOnDevice(dataUrl, `${getMaskName()}.png`);
+  saveImageOnDevice(dataUrl, `${getFaceName()}.png`);
 }
 
 // --- GALLERY LOGIC (DYNAMIC, PNG ONLY) ---
@@ -1262,7 +1262,7 @@ let currentGalleryList = [];
 async function fetchGalleryList() {
   try {
     console.log('Loading gallery from localStorage...');
-    const savedGallery = localStorage.getItem('maskGallery');
+    const savedGallery = localStorage.getItem('faceGallery');
     console.log('Saved gallery data:', savedGallery);
     
     if (savedGallery) {
@@ -1297,12 +1297,12 @@ function renderGalleryGrid() {
   grid.style.maxWidth = '1200px';
   grid.style.margin = '0 auto';
   
-  fetchGalleryList().then(masks => {
-    currentGalleryList = masks;
-    if (!masks.length) {
+  fetchGalleryList().then(faces => {
+    currentGalleryList = faces;
+    if (!faces.length) {
       const msg = document.createElement('div');
-      msg.className = 'no-masks-message';
-      msg.textContent = 'No masks in the gallery yet.';
+      msg.className = 'no-faces-message';
+      msg.textContent = 'No faces in the gallery yet.';
       msg.style.color = 'white';
       msg.style.textAlign = 'center';
       msg.style.fontSize = '18px';
@@ -1310,7 +1310,7 @@ function renderGalleryGrid() {
       grid.appendChild(msg);
       return;
     }
-    masks.forEach((maskObj, idx) => {
+    faces.forEach((faceObj, idx) => {
       // Create container for image and delete button
       const container = document.createElement('div');
       container.style.position = 'relative';
@@ -1319,13 +1319,13 @@ function renderGalleryGrid() {
       container.style.marginLeft = '40px'; // Add space between left arrow and image
       
       const img = document.createElement('img');
-      img.src = maskObj.imageUrl; // Use the data URL from localStorage
-      img.alt = maskObj.name || `Mask ${idx + 1}`;
+      img.src = faceObj.imageUrl; // Use the data URL from localStorage
+      img.alt = faceObj.name || `Face ${idx + 1}`;
       img.className = 'gallery-item-image';
       img.style.cursor = 'pointer';
       img.addEventListener('click', () => openGalleryModal(idx));
       img.addEventListener('error', (e) => {
-        console.error('Failed to load image:', maskObj.name, e);
+        console.error('Failed to load image:', faceObj.name, e);
       });
       img.addEventListener('load', () => {
         // Image loaded successfully
@@ -1334,7 +1334,7 @@ function renderGalleryGrid() {
       // Create delete button overlay
       const deleteOverlay = document.createElement('button');
       deleteOverlay.innerHTML = '×';
-      deleteOverlay.title = 'Delete Mask';
+      deleteOverlay.title = 'Delete Face';
       deleteOverlay.style.position = 'absolute';
       deleteOverlay.style.top = '5px';
       deleteOverlay.style.right = '5px';
@@ -1362,18 +1362,18 @@ function renderGalleryGrid() {
       deleteOverlay.addEventListener('click', async (e) => {
         e.stopPropagation(); // Prevent opening modal
         
-        if (!confirm(`Are you sure you want to delete "${maskObj.name}"? This action cannot be undone.`)) {
+        if (!confirm(`Are you sure you want to delete "${faceObj.name}"? This action cannot be undone.`)) {
           return;
         }
         
         try {
           // Remove from localStorage
-          const savedGallery = localStorage.getItem('maskGallery');
+          const savedGallery = localStorage.getItem('faceGallery');
           const gallery = savedGallery ? JSON.parse(savedGallery) : [];
-          const updatedGallery = gallery.filter(mask => mask.id !== maskObj.id);
-          localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
+          const updatedGallery = gallery.filter(face => face.id !== faceObj.id);
+          localStorage.setItem('faceGallery', JSON.stringify(updatedGallery));
           
-          console.log('Mask deleted successfully:', maskObj.name);
+          console.log('Face deleted successfully:', faceObj.name);
           
           // Remove from current list
           currentGalleryList.splice(idx, 1);
@@ -1382,10 +1382,10 @@ function renderGalleryGrid() {
           renderGalleryGrid();
           
           // Show success message
-          alert('Mask deleted successfully!');
+          alert('Face deleted successfully!');
         } catch (error) {
-          console.error('Error deleting mask:', error);
-          alert('Failed to delete mask. Please try again.');
+          console.error('Error deleting face:', error);
+          alert('Failed to delete face. Please try again.');
         }
       });
       
@@ -1396,7 +1396,7 @@ function renderGalleryGrid() {
   }).catch(error => {
     console.error('Error rendering gallery grid:', error);
     const msg = document.createElement('div');
-    msg.className = 'no-masks-message';
+    msg.className = 'no-faces-message';
     msg.textContent = 'Error loading gallery. Please try again.';
     msg.style.color = 'white';
     msg.style.textAlign = 'center';
@@ -1493,7 +1493,7 @@ function openGalleryModal(idx) {
 
   // Delete button
   const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = 'Delete Mask';
+  deleteBtn.textContent = 'Delete Face';
   deleteBtn.style.marginTop = '0.5rem';
   deleteBtn.style.marginLeft = '1rem';
   deleteBtn.style.display = 'inline-block';
@@ -1564,43 +1564,43 @@ function openGalleryModal(idx) {
   imgMetaRow.appendChild(rightArrow);
 
   function updateModal() {
-    const maskObj = currentGalleryList[currentIdx];
-    console.log('Modal maskObj:', maskObj);
-    console.log('Modal maskObj.name:', maskObj.name);
-    console.log('Modal maskObj.words:', maskObj.words);
+    const faceObj = currentGalleryList[currentIdx];
+    console.log('Modal faceObj:', faceObj);
+    console.log('Modal faceObj.name:', faceObj.name);
+    console.log('Modal faceObj.words:', faceObj.words);
     
     // Use the data URL from localStorage
-    img.src = maskObj.imageUrl;
-    img.alt = maskObj.name || `Mask ${currentIdx + 1}`;
+    img.src = faceObj.imageUrl;
+    img.alt = faceObj.name || `Face ${currentIdx + 1}`;
     
     // Set up download button
-    downloadBtn.download = maskObj.filename || 'mask.png';
-    downloadBtn.href = maskObj.imageUrl;
+    downloadBtn.download = faceObj.filename || 'face.png';
+    downloadBtn.href = faceObj.imageUrl;
     
     // Show name and adjectives
-    nameHeading.textContent = maskObj.name || 'MASK';
-    adjectivesDiv.textContent = (maskObj.words && maskObj.words.length)
-      ? maskObj.words.join(', ')
+    nameHeading.textContent = faceObj.name || 'FACE';
+    adjectivesDiv.textContent = (faceObj.words && faceObj.words.length)
+      ? faceObj.words.join(', ')
       : '';
   }
 
   // Delete functionality
   deleteBtn.addEventListener('click', async () => {
-    const maskObj = currentGalleryList[currentIdx];
-    if (!maskObj) return;
+    const faceObj = currentGalleryList[currentIdx];
+    if (!faceObj) return;
     
-    if (!confirm(`Are you sure you want to delete "${maskObj.name}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${faceObj.name}"? This action cannot be undone.`)) {
       return;
     }
     
     try {
       // Remove from localStorage
-      const savedGallery = localStorage.getItem('maskGallery');
+      const savedGallery = localStorage.getItem('faceGallery');
       const gallery = savedGallery ? JSON.parse(savedGallery) : [];
-      const updatedGallery = gallery.filter(mask => mask.id !== maskObj.id);
-      localStorage.setItem('maskGallery', JSON.stringify(updatedGallery));
+      const updatedGallery = gallery.filter(face => face.id !== faceObj.id);
+      localStorage.setItem('faceGallery', JSON.stringify(updatedGallery));
       
-      console.log('Mask deleted successfully:', maskObj.name);
+      console.log('Face deleted successfully:', faceObj.name);
       
       // Remove from current list
       currentGalleryList.splice(currentIdx, 1);
@@ -1613,10 +1613,10 @@ function openGalleryModal(idx) {
       renderGalleryGrid();
       
       // Show success message
-      alert('Mask deleted successfully!');
+      alert('Face deleted successfully!');
     } catch (error) {
-      console.error('Error deleting mask:', error);
-      alert('Failed to delete mask. Please try again.');
+      console.error('Error deleting face:', error);
+      alert('Failed to delete face. Please try again.');
     }
   });
 
@@ -1660,10 +1660,10 @@ function openGalleryModal(idx) {
 }
 
 // --- SAVE TO GALLERY LOGIC ---
-async function saveMaskToGallery(canvas, name, adjectives) {
+async function saveFaceToGallery(canvas, name, adjectives) {
   return new Promise((resolve, reject) => {
     try {
-      console.log('Saving mask to localStorage:', name);
+      console.log('Saving face to localStorage:', name);
       
       canvas.toBlob(blob => {
         try {
@@ -1680,26 +1680,26 @@ async function saveMaskToGallery(canvas, name, adjectives) {
               const imageDataUrl = reader.result;
               console.log('Image converted to data URL, length:', imageDataUrl.length);
               
-              // Create mask object
-              const maskObj = {
+              // Create face object
+              const faceObj = {
                 id: Date.now().toString(),
-                name: name || getMaskName(),
+                name: name || getFaceName(),
                 words: adjectives || [],
-                filename: getMaskName() + '.png',
+                filename: getFaceName() + '.png',
                 imageUrl: imageDataUrl
               };
               
-              console.log('New mask object created:', maskObj);
+              console.log('New face object created:', faceObj);
               
               // Get existing gallery
-              const savedGallery = localStorage.getItem('maskGallery');
+              const savedGallery = localStorage.getItem('faceGallery');
               const gallery = savedGallery ? JSON.parse(savedGallery) : [];
               
-              // Add new mask to gallery
-              gallery.unshift(maskObj);
+              // Add new face to gallery
+              gallery.unshift(faceObj);
               
               // Save back to localStorage
-              localStorage.setItem('maskGallery', JSON.stringify(gallery));
+              localStorage.setItem('faceGallery', JSON.stringify(gallery));
               console.log('Saved to localStorage, gallery count:', gallery.length);
               
               resolve();
@@ -1716,7 +1716,7 @@ async function saveMaskToGallery(canvas, name, adjectives) {
         }
       }, 'image/png');
     } catch (error) {
-      console.error('Error in saveMaskToGallery:', error);
+      console.error('Error in saveFaceToGallery:', error);
       reject(error);
     }
   });
@@ -1732,10 +1732,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const galleryBtn = document.getElementById('galleryBtn');
     const galleryModal = document.getElementById('galleryModal');
     const closeGallery = document.getElementById('closeGallery');
-    const newFacetteBtn = document.getElementById('newFacetteBtn');
-    const maskApp = document.getElementById('maskApp');
+    const tryItBtn = document.getElementById('tryItBtn');
+    const faceApp = document.getElementById('faceApp');
     const landing = document.querySelector('.landing-container');
-    let maskAppInitialized = false;
+    let faceAppInitialized = false;
     const galleryOverlay = document.getElementById('galleryOverlay');
     const backToLandingBtn = document.getElementById('backToLandingBtn');
 
@@ -1774,7 +1774,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (aboutStartBtn) {
             aboutStartBtn.addEventListener('click', () => {
                 closeAboutOverlay();
-                newFacetteBtn?.click();
+                tryItBtn?.click();
             });
         }
         if (aboutGalleryBtn && galleryBtn) {
@@ -1816,17 +1816,17 @@ document.addEventListener('DOMContentLoaded', () => {
             galleryBtn.classList.add('disabled');
         });
     }
-    if (newFacetteBtn && maskApp && landing) {
-        newFacetteBtn.addEventListener('click', (e) => {
+    if (tryItBtn && faceApp && landing) {
+        tryItBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            startRandomFacette();
+            startRandomFace();
         });
     }
     const drawAnotherBtn = document.getElementById('drawAnotherBtn');
     if (drawAnotherBtn) {
         drawAnotherBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            startRandomFacette();
+            startRandomFace();
         });
     }
     // Back to landing arrow logic
@@ -1839,8 +1839,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const testElements = galleryOverlay.querySelectorAll('div[style*="GALLERY OVERLAY IS WORKING"]');
             testElements.forEach(el => el.remove());
             
-            // Show facette creation UI if it was visible before
-            if (maskApp && !landing.classList.contains('hidden')) maskApp.classList.add('hidden');
+            // Show face creation UI if it was visible before
+            if (faceApp && !landing.classList.contains('hidden')) faceApp.classList.add('hidden');
         });
     }
 
@@ -1939,6 +1939,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTileColor = tileColorPalette[Math.floor(Math.random() * tileColorPalette.length)];
 
     function animateTilesBatch() {
+        // The landing page covers this field; only animate while Create is open.
+        if (landing && !landing.classList.contains('hidden')) return;
         animationCycle++;
         // Only pick a new color every 3rd cycle (on cycles 3, 6, 9, ...)
         if (animationCycle % 3 === 0) {
@@ -2009,7 +2011,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add scroll event listener for floating button
-    const floatingBtn = document.getElementById('floatingNewFacetteBtn');
+    const floatingBtn = document.getElementById('floatingTryItBtn');
     
     function handleScroll() {
         if (!floatingBtn) return;
@@ -2038,7 +2040,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (floatingBtn) {
         floatingBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            startRandomFacette();
+            startRandomFace();
         });
     }
 
@@ -2046,14 +2048,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadButton = document.getElementById('downloadButton');
     if (downloadButton) {
         downloadButton.addEventListener('click', () => {
-            downloadMask();
+            downloadFace();
         });
     }
     const shareButton = document.getElementById('shareButton');
     if (shareButton) {
         shareButton.addEventListener('click', () => {
             try {
-                shareFacette();
+                shareFace();
             } catch (err) {
                 console.error('Share failed', err);
             }
@@ -2068,18 +2070,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Always render the gallery grid strip at the bottom of the facette creation UI
+    // Always render the gallery grid strip at the bottom of the face creation UI
     // (Assume there is a <div id="galleryGridStrip"></div> in the HTML, or add it if missing)
-    // Render gallery grid strip at the bottom of facette creation UI
+    // Render gallery grid strip at the bottom of face creation UI
     const galleryGridStrip = document.getElementById('galleryGridStrip');
     if (galleryGridStrip) {
         renderGalleryGrid();
     }
 
     const backToHomeBtn = document.getElementById('backToHomeBtn');
-    if (backToHomeBtn && maskApp && landing) {
+    if (backToHomeBtn && faceApp && landing) {
         backToHomeBtn.addEventListener('click', () => {
-            maskApp.classList.add('hidden');
+            faceApp.classList.add('hidden');
             landing.classList.remove('hidden');
             
             // Reset gallery overlay state
@@ -2097,3 +2099,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 }); 
+
+// Shared with the landing page (landing.js / face-engine.js).
+export {
+  WORD_PANEL_MAP,
+  WORD_TILE_MAP,
+  WORD_COLOR_MAP,
+  WORD_CATEGORIES,
+  colorForWord,
+  normalizeWordKey,
+  inkForHex,
+  startRandomFace,
+};

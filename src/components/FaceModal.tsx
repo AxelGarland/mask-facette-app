@@ -1,19 +1,19 @@
-import type { Facette } from '../types/Facette';
+import type { Face } from '../types/Face';
 
-interface FacetteModalProps {
-  facette: Facette;
+interface FaceModalProps {
+  face: Face;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function FacetteModal({ facette, isOpen, onClose }: FacetteModalProps) {
+export default function FaceModal({ face, isOpen, onClose }: FaceModalProps) {
   if (!isOpen) return null;
 
   function handleDownload() {
-    if (facette.imageUrl) {
+    if (face.imageUrl) {
       const link = document.createElement('a');
-      link.href = facette.imageUrl;
-      link.download = `${facette.name}.png`;
+      link.href = face.imageUrl;
+      link.download = `${face.name}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -25,7 +25,7 @@ export default function FacetteModal({ facette, isOpen, onClose }: FacetteModalP
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-bold">{facette.name}</h2>
+            <h2 className="text-xl font-bold">{face.name}</h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -35,10 +35,10 @@ export default function FacetteModal({ facette, isOpen, onClose }: FacetteModalP
           </div>
           
           <div className="mb-4">
-            {facette.imageUrl ? (
+            {face.imageUrl ? (
               <img
-                src={facette.imageUrl}
-                alt={facette.name}
+                src={face.imageUrl}
+                alt={face.name}
                 className="w-full rounded-lg"
               />
             ) : (
@@ -51,7 +51,7 @@ export default function FacetteModal({ facette, isOpen, onClose }: FacetteModalP
           <div className="mb-4">
             <h3 className="font-semibold mb-2">Words chosen:</h3>
             <div className="flex flex-wrap gap-2">
-              {facette.words.map((word, index) => (
+              {face.words.map((word, index) => (
                 <span
                   key={index}
                   className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"

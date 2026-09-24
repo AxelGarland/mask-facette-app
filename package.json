@@ -1,6 +1,6 @@
 {
-  "name": "mask-facette-app",
-  "description": "A React-based web application for creating and customizing digital masks",
+  "name": "kindred",
+  "description": "A React-based web application for creating and customizing digital faces",
   "private": true,
   "version": "1.0.0",
   "type": "module",
