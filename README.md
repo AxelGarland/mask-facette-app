@@ -1,59 +1,45 @@
-# Mask Facette App
+# Kindred
 
-A React-based web application for creating and customizing digital masks with a modern, interactive interface.
+A poster collection of generated faces. Twenty-seven hand-drawn tiles and a few
+rules of symmetry produce endless faces that share the same DNA.
 
-## Features
+This repo holds the landing page, the interactive face generator, and the poster
+inquiry form.
 
-- Interactive mask generation and customization
-- Gallery of created masks
-- Modern React + TypeScript + Vite setup
-- Responsive design
+## Tech stack
 
-## Tech Stack
+- Vanilla JS modules, HTML and CSS, built with Vite
+- p5.js (loaded from a CDN) for the face generator
+- A generated SVG tile sprite for the landing page faces
 
-- **Frontend**: React 19 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: CSS
-- **Linting**: ESLint
+## Getting started
 
-## Getting Started
+Requires Node.js 18 or higher.
 
-### Prerequisites
-
-- Node.js (version 18 or higher)
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <your-repo-url>
-cd mask-app
-```
-
-2. Install dependencies:
 ```bash
 npm install
-```
-
-3. Start the development server:
-```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+Then open the address Vite prints (usually `http://localhost:5173`).
 
-### Available Scripts
+## Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+- `npm run dev` starts the development server
+- `npm run build` builds for production
+- `npm run preview` previews the production build
+- `npm run lint` runs ESLint
+
+## Where things live
+
+- `index.html`, `kindred.css`, `landing.js`: the landing page
+- `face-engine.js`: the face rules (which tile goes in which cell)
+- `main.js`: the face generator, and the tile and word data tables
+- `posters.js`: contact email, poster list, product facts and mockups
+- `public/tiles`: the 27 tile SVGs. After editing them, run
+  `node scripts/build-tile-sprite.mjs` to regenerate `tile-sprite.js`
+- `public/posters` and `public/mockups`: poster and mockup images
 
 ## Deployment
 
-This app is configured for easy deployment on Vercel. Simply connect your GitHub repository to Vercel for automatic deployments.
-
-## License
-
-MIT
+Configured for Vercel. Connect the repository and it builds automatically.
